@@ -1,0 +1,1549 @@
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>5G SA and NSA Call-Flow Studio</title>
+<meta name="description" content="Animated 5G Standalone and Non-Standalone call flows with a plain-language explanation of every message.">
+<style>
+  :root{
+    --bg:#0c1218; --panel:#141c26; --panel-2:#1b2633; --line:#2c3b4d;
+    --text:#eef3f8; --muted:#c5d0dc; --faint:#8ea0b4;
+    --sa:#2fbfa0; --nsa:#e0a23a; --accent:#8eb4e8;
+    --ue:#d5dde6; --ran:#9ec1f0; --cp:#7ddec4; --up:#8fd0a8; --data:#e2c98a;
+    --font:"Segoe UI",system-ui,-apple-system,sans-serif;
+    --mono:Consolas,"Cascadia Code","Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:17px;line-height:1.55}
+  button,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+  button:focus-visible,select:focus-visible{outline:2px solid var(--sa);outline-offset:2px}
+  .top{
+    position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;gap:12px 18px;
+    align-items:center;justify-content:space-between;
+    padding:12px 18px;background:rgba(12,18,24,.94);border-bottom:1px solid var(--line);
+  }
+  .brand{min-width:220px}
+  .brand b{display:block;font-size:1.05rem;letter-spacing:-.01em}
+  .brand span{color:var(--faint);font-size:.86rem}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .tabs button,.btn,.chip{
+    border:1px solid var(--line);background:var(--panel);border-radius:999px;
+    padding:8px 14px;min-height:40px;
+  }
+  .tabs button.on{background:var(--text);color:#10161c;border-color:var(--text);font-weight:700}
+  .wrap{max-width:1280px;margin:0 auto;padding:22px 18px 64px}
+  h1{font-size:clamp(1.6rem,3vw,2.05rem);line-height:1.2;margin:0 0 8px;letter-spacing:-.02em}
+  h2{font-size:1.25rem;margin:0 0 8px}
+  p{margin:0 0 10px;color:var(--muted)}
+  .lead{max-width:70ch;font-size:1.05rem}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .kicker{font-family:var(--mono);font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+  .sa-k{color:var(--sa)} .nsa-k{color:var(--nsa)}
+  .arch{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
+  .pill{border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:6px 8px;min-width:64px;text-align:center}
+  .pill b{display:block;font-size:.92rem}
+  .pill small{color:var(--faint);font-size:.72rem}
+  .lnk{color:var(--faint);font-family:var(--mono);font-size:.75rem;padding:0 2px}
+  .chain{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .chain button{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:10px;padding:8px 10px;text-align:left}
+  .chain button:hover{border-color:var(--accent);color:var(--text)}
+  .chain button small{display:block;color:var(--faint);font-size:.75rem}
+  .src{color:var(--faint);font-size:.85rem;margin-top:16px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 12px}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#071018;font-weight:700}
+  .studio[data-mode="SA"] .btn.primary{background:var(--sa);border-color:var(--sa);color:#04241c}
+  .studio[data-mode="NSA"] .btn.primary{background:var(--nsa);border-color:var(--nsa);color:#2a1c04}
+  .btn.on{border-color:var(--text)}
+  .chip.on{background:var(--text);color:#10161c;border-color:var(--text);font-weight:650}
+  .chip.up{border-style:dashed}
+  .goal{color:var(--muted);max-width:85ch}
+  .meta{font-family:var(--mono);font-size:.82rem;color:var(--faint)}
+  .banner{
+    border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--panel);
+    border-radius:12px;padding:12px 14px;margin:10px 0;
+  }
+  .studio[data-mode="SA"] .banner{border-left-color:var(--sa)}
+  .studio[data-mode="NSA"] .banner{border-left-color:var(--nsa)}
+  .banner .t{font-weight:700;margin-bottom:4px}
+  .phases{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .phases button{border:1px solid var(--line);background:transparent;color:var(--faint);border-radius:999px;padding:4px 10px;font-size:.82rem}
+  .phases button.on{color:#10161c;background:var(--accent);border-color:var(--accent)}
+  .studio[data-mode="SA"] .phases button.on{background:var(--sa);border-color:var(--sa)}
+  .studio[data-mode="NSA"] .phases button.on{background:var(--nsa);border-color:var(--nsa)}
+  .studio-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,.85fr);gap:14px;align-items:start}
+  .ladder-scroll{
+    position:relative;overflow:auto;max-height:calc(100vh - 280px);background:#0e1620;border:1px solid var(--line);
+    border-radius:12px;padding:8px 8px 16px;
+  }
+  .studio[data-mode="SA"]{--accent:var(--sa)}
+  .studio[data-mode="NSA"]{--accent:var(--nsa)}
+  .line{display:grid;grid-template-columns:46px minmax(0,1fr);min-width:720px}
+  .gutter{color:var(--faint);font-family:var(--mono);font-size:.78rem;padding-top:18px;text-align:right;padding-right:6px}
+  .cols{position:relative;display:grid;min-height:78px}
+  .line.head{position:sticky;top:0;z-index:3;background:#0e1620}
+  .hd{text-align:center;padding:8px 4px 10px;background:#0e1620}
+  .hd b{display:block;font-size:.92rem}
+  .hd small{color:var(--faint);font-size:.7rem}
+  .hd.ue b{color:var(--ue)} .hd.ran b{color:var(--ran)} .hd.cp b{color:var(--cp)} .hd.up b{color:var(--up)} .hd.data b{color:var(--data)}
+  .hd.hot{background:#1a2836;border-radius:8px}
+  .life{border-left:1px solid #314155;height:100%;justify-self:center}
+  .step{display:block;width:100%;text-align:left;border:0;background:transparent;padding:0;border-radius:8px}
+  .step.on{background:rgba(142,180,232,.08)}
+  .hop{
+    position:absolute;top:34px;height:2px;background:#3d5168;
+  }
+  .hop em{
+    position:absolute;left:50%;top:-24px;transform:translateX(-50%);
+    font-style:normal;font-size:.78rem;white-space:nowrap;background:#0e1620;padding:0 5px;color:var(--muted);
+  }
+  .hop::after{
+    content:"";position:absolute;right:-2px;top:-4px;
+    border:5px solid transparent;border-left-color:#3d5168;
+  }
+  .hop.back::after{right:auto;left:-2px;border-left-color:transparent;border-right-color:#3d5168}
+  .step.past .hop{background:#6d8298}
+  .step.past .hop::after{border-left-color:#6d8298}
+  .step.past .hop.back::after{border-left-color:transparent;border-right-color:#6d8298}
+  .step.on .hop{background:var(--accent);height:3px}
+  .studio[data-mode="SA"] .step.on .hop{background:var(--sa)}
+  .studio[data-mode="NSA"] .step.on .hop{background:var(--nsa)}
+  .step.on .hop em{color:var(--text);font-weight:700}
+  .step.on .hop::after{border-left-color:var(--accent)}
+  .studio[data-mode="SA"] .step.on .hop::after{border-left-color:var(--sa)}
+  .studio[data-mode="NSA"] .step.on .hop::after{border-left-color:var(--nsa)}
+  .step.on .hop.back::after{border-left-color:transparent;border-right-color:var(--accent)}
+  .studio[data-mode="SA"] .step.on .hop.back::after{border-left-color:transparent;border-right-color:var(--sa)}
+  .studio[data-mode="NSA"] .step.on .hop.back::after{border-left-color:transparent;border-right-color:var(--nsa)}
+  .pkt{
+    position:absolute;top:-5px;width:11px;height:11px;border-radius:50%;background:var(--accent);
+    animation:move 1s linear infinite;
+  }
+  .studio[data-mode="SA"] .pkt{background:var(--sa)}
+  .studio[data-mode="NSA"] .pkt{background:var(--nsa)}
+  .hop.back .pkt{animation-name:moveBack}
+  @keyframes move{from{left:0}to{left:calc(100% - 11px)}}
+  @keyframes moveBack{from{left:calc(100% - 11px)}to{left:0}}
+  .self{
+    position:absolute;top:22px;transform:translateX(-50%);
+    border:1px dashed var(--accent);color:var(--text);background:#15202b;
+    border-radius:999px;padding:3px 8px;font-size:.75rem;white-space:nowrap;
+  }
+  .study{position:sticky;top:74px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .study h3{margin:0 0 6px;font-size:1.05rem}
+  .kv{display:grid;grid-template-columns:92px 1fr;gap:4px 8px;font-size:.92rem;margin:8px 0}
+  .kv span{color:var(--faint)}
+  .study ul{margin:6px 0 8px;padding-left:18px;color:var(--muted)}
+  .study li{margin:2px 0}
+  .call{background:#1a2430;border-radius:10px;padding:8px 10px;color:var(--muted);font-size:.92rem}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;color:var(--faint);font-size:.8rem;margin:6px 0}
+  .legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+  table{width:100%;border-collapse:collapse;font-size:.95rem}
+  th,td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--faint);font-size:.78rem;text-transform:uppercase;letter-spacing:.03em}
+  td button{border:0;background:transparent;color:var(--accent);padding:0;text-decoration:underline}
+  .hidden{display:none}
+  .progress{height:6px;background:#223041;border-radius:99px;overflow:hidden;margin:6px 0 10px}
+  .progress i{display:block;height:100%;background:var(--accent);width:0}
+  .studio[data-mode="SA"] .progress i{background:var(--sa)}
+  .studio[data-mode="NSA"] .progress i{background:var(--nsa)}
+  .tourtag{font-family:var(--mono);font-size:.8rem;color:var(--nsa)}
+  .chiprow,.phases{display:flex;gap:8px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .chiprow .chip,.phases button{flex:0 0 auto}
+  .phone-only{display:none}
+  .swipe-hint{display:none}
+  .dock{display:none}
+  .pcard{
+    display:block;width:100%;text-align:left;border:1px solid var(--line);background:transparent;
+    color:var(--muted);border-radius:14px;padding:12px 12px;margin:0 0 8px;min-height:48px;
+  }
+  .pcard.on{background:var(--panel);border-color:var(--sa);color:var(--text)}
+  .studio[data-mode="NSA"] .pcard.on{border-color:var(--nsa)}
+  .pcard .route{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .pcard .route b{color:var(--text);font-size:1rem}
+  .pcard ul{margin:6px 0 8px;padding-left:18px}
+  .pcard h3{font-size:1.08rem;line-height:1.35}
+  .pcard .kicker{margin-top:8px}
+  .banner.speaking{border-left-width:6px}
+  .speakdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--sa);margin-right:6px;vertical-align:middle}
+  .studio[data-mode="NSA"] .speakdot{background:var(--nsa)}
+  @media (max-width:980px){
+    .grid-2,.studio-grid{grid-template-columns:1fr}
+    .study{position:static}
+    .ladder-scroll{max-height:62vh}
+  }
+  @media (max-width:860px){
+    .top{padding:10px 12px 8px}
+    .brand{min-width:0}
+    .brand span{display:none}
+    .tabs{width:100%;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
+    .tabs button{flex:0 0 auto;min-height:44px}
+    .wrap{padding:14px 12px 128px}
+    h1{font-size:1.45rem}
+    .chain{display:grid;grid-template-columns:1fr}
+    .chain button{min-height:52px;background:var(--panel-2)}
+    .phone-only{display:block}
+    .toolbar.desk-tools{display:none}
+    .ladder-scroll{max-height:58vh;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+    .line{min-width:0}
+    .swipe-hint{display:block;margin:0 0 8px;color:var(--faint);font-size:.92rem}
+    .goal{font-size:.98rem}
+    .dock{
+      display:grid;grid-template-columns:1fr 1.35fr 1fr;gap:8px;
+      position:fixed;left:0;right:0;bottom:0;z-index:40;
+      padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+      background:rgba(12,18,24,.97);border-top:1px solid var(--line);
+    }
+    .dock .btn{min-height:48px;border-radius:12px}
+    .dock .wide{grid-column:1 / -1;min-height:42px}
+    .pill{min-width:0}
+    table{font-size:.9rem}
+    th,td{padding:8px 6px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .pkt{animation:none;left:40%}
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <b>5G SA and NSA Call-Flow Studio</b>
+    <span>Standalone Option 2 and EN-DC Option 3x</span>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button type="button" data-act="page" data-page="overview" class="on">Overview</button>
+    <button type="button" data-act="page" data-page="SA">SA flows</button>
+    <button type="button" data-act="page" data-page="NSA">NSA flows</button>
+    <button type="button" data-act="page" data-page="compare">Compare</button>
+  </nav>
+</header>
+<main class="wrap" id="app"><h1>Study SA and NSA as real procedures</h1>
+  <p class="lead">Press play and the studio walks the message sequence out loud. Each step is read in full: who sends it, why it exists, the fields that matter, and the state afterwards. On a phone, use the bar at the bottom. Voice stays on until you mute it.</p>
+  <div class="toolbar">
+    <button class="btn primary" type="button" data-act="tour" data-mode="SA">Play full SA life cycle</button>
+    <button class="btn primary" type="button" data-act="tour" data-mode="NSA">Play full NSA life cycle</button>
+  </div>
+  <div class="grid-2">
+    <section class="panel">
+      <div class="kicker sa-k">Standalone · Option 2</div>
+      <h2>NR and the 5G Core</h2>
+      <div class="arch">
+    <div class="pill"><b>UE</b><small>NAS + RRC</small></div><span class="lnk">Uu</span>
+    <div class="pill"><b>gNB</b><small>NR only</small></div><span class="lnk">N2</span>
+    <div class="pill"><b>AMF</b><small>control</small></div><span class="lnk">N11</span>
+    <div class="pill"><b>SMF</b><small>session</small></div><span class="lnk">N4</span>
+    <div class="pill"><b>UPF</b><small>user plane</small></div><span class="lnk">N6</span>
+    <div class="pill"><b>DN</b><small>data network</small></div>
+  </div>
+  <p>AMF also talks to AUSF (N12), UDM (N8) and PCF (N15). SMF talks to PCF (N7) and UDM (N10). User packets take N3 from gNB to UPF and skip the AMF.</p>
+      <div class="chain"><button type="button" data-act="flow" data-id="sa-reg"><b>Initial Registration</b><small>Signalling</small></button><button type="button" data-act="flow" data-id="sa-pdu"><b>PDU Session Establishment</b><small>Signalling</small></button><button type="button" data-act="flow" data-id="sa-sr"><b>Service Request</b><small>Signalling</small></button><button type="button" data-act="flow" data-id="sa-an"><b>AN Release</b><small>Signalling</small></button><button type="button" data-act="flow" data-id="sa-xn"><b>Xn Handover</b><small>Signalling</small></button><button type="button" data-act="flow" data-id="sa-n2"><b>N2 Handover</b><small>Signalling</small></button><button type="button" data-act="flow" data-id="sa-mod"><b>Add a QoS flow</b><small>Signalling</small></button><button type="button" data-act="flow" data-id="sa-dereg"><b>Deregistration</b><small>Signalling</small></button></div>
+    </section>
+    <section class="panel">
+      <div class="kicker nsa-k">Non-Standalone · EN-DC Option 3x</div>
+      <h2>LTE anchor, NR added</h2>
+      <div class="arch">
+    <div class="pill"><b>UE</b><small>LTE master</small></div><span class="lnk">Uu LTE</span>
+    <div class="pill"><b>MeNB</b><small>master</small></div><span class="lnk">S1-MME</span>
+    <div class="pill"><b>MME</b><small>EPC</small></div><span class="lnk">S11</span>
+    <div class="pill"><b>SGW</b></div><span class="lnk">S5</span>
+    <div class="pill"><b>PGW</b></div>
+  </div>
+  <div class="arch">
+    <div class="pill"><b>UE</b><small>NR leg</small></div><span class="lnk">Uu NR</span>
+    <div class="pill"><b>SgNB</b><small>secondary</small></div><span class="lnk">S1-U in 3x</span>
+    <div class="pill"><b>SGW</b></div>
+    <span class="lnk">X2 between MeNB and SgNB</span>
+  </div>
+  <p>Option 3x keeps NAS on LTE. The SgNB is added with X2. Downlink for an SCG or split bearer moves from the MeNB to the SgNB.</p>
+      <div class="chain"><button type="button" data-act="flow" data-id="nsa-att"><b>LTE Attach</b><small>Signalling</small></button><button type="button" data-act="flow" data-id="nsa-add"><b>SgNB Addition (Option 3x)</b><small>Signalling</small></button><button type="button" data-act="flow" data-id="nsa-scg"><b>SCG bearer path</b><small>User-plane path</small></button><button type="button" data-act="flow" data-id="nsa-split"><b>Split bearer path</b><small>User-plane path</small></button><button type="button" data-act="flow" data-id="nsa-mcg"><b>MCG bearer path</b><small>User-plane path</small></button><button type="button" data-act="flow" data-id="nsa-rel"><b>SgNB Release</b><small>Signalling</small></button><button type="button" data-act="flow" data-id="nsa-chg"><b>SgNB Change</b><small>Signalling</small></button><button type="button" data-act="flow" data-id="nsa-sr"><b>LTE Service Request</b><small>Signalling</small></button></div>
+    </section>
+  </div>
+  <p class="src">Main path only, aligned with 3GPP TS 23.502, TS 23.501, TS 38.300, TS 38.331, TS 37.340 and TS 23.401. AMF relocation, I-UPF insertion, EPS fallback, and EAP-AKA' are named where they change the story and are not drawn as extra ladders. Keyboard: Space plays, Left and Right step.</p></main>
+<script>
+const NODES = {
+  UE:["UE","ue","Handset"],
+  gNB:["gNB","ran","NR radio"],
+  Src:["Src gNB","ran","Source NR"],
+  Tgt:["Tgt gNB","ran","Target NR"],
+  AMF:["AMF","cp","Mobility"],
+  SMF:["SMF","cp","Session"],
+  UPF:["UPF","up","User plane"],
+  AUSF:["AUSF","data","Auth server"],
+  UDM:["UDM","data","Subscription"],
+  PCF:["PCF","data","Policy"],
+  eNB:["eNB","ran","LTE radio"],
+  MeNB:["MeNB","ran","LTE master"],
+  SgNB:["SgNB","ran","NR secondary"],
+  Ssrc:["Src SgNB","ran","Old NR"],
+  Stgt:["Tgt SgNB","ran","New NR"],
+  MME:["MME","cp","EPC control"],
+  HSS:["HSS","data","Subscription"],
+  SGW:["SGW","up","EPC gateway"],
+  PGW:["PGW","up","PDN gateway"]
+};
+function nodes(){return Array.from(arguments).map(id=>({id,label:NODES[id][0],kind:NODES[id][1],role:NODES[id][2]}));}
+function s(phase,title,from,to,arrow,msg,iface,proto,plain,ies,after,watch){
+  return {phase,title,from,to,arrow,msg,iface,proto,plain,ies,after,watch:watch||""};
+}
+
+const FLOWS = [
+  {id:"sa-reg", mode:"SA", kind:"signalling", title:"Initial Registration",
+   spec:"TS 23.502 §4.2.2.2.2 · TS 38.331",
+   goal:"The UE switches on, proves its identity, and becomes RM-REGISTERED on the 5G Core. No IP address is assigned here. A PDU session is a later procedure.",
+   end:"RM-REGISTERED and CM-CONNECTED. NAS and AS security are on. No data radio bearer yet.",
+   nodes:nodes("UE","gNB","AMF","AUSF","UDM","PCF"),
+   steps:[
+     s("Radio","UE asks for a radio connection","UE","gNB","RRCSetupRequest","RRCSetupRequest","Uu","NR RRC",
+       "The UE has no RRC connection. It sends RRCSetupRequest with a random identity and cause mo-Signalling. Only the gNB hears this. The 5G Core is not in the procedure yet.",
+       ["ue-Identity (random value)","establishmentCause = mo-Signalling"],
+       "Random access is under way. No AMF context."),
+     s("Radio","gNB creates the signalling bearer","gNB","UE","RRCSetup","RRCSetup","Uu","NR RRC",
+       "The gNB accepts the request and creates SRB1, the first signalling radio bearer. The UE can now carry NAS messages inside RRC.",
+       ["radioBearerConfig for SRB1","masterCellGroup"],
+       "RRC connection exists. SRB1 is up. NAS is still absent."),
+     s("Identity","Registration Request rides on RRC","UE","gNB","Registration Request","RRCSetupComplete with NAS Registration Request","Uu","RRC + 5GMM",
+       "RRCSetupComplete carries the first NAS message: Registration Request. The UE hides its permanent identity as a SUCI, tells the network which slices it wants, and lists the NAS algorithms it supports. This NAS message is still unprotected.",
+       ["registration type = initial registration","SUCI (concealed SUPI)","UE security capability","requested NSSAI"],
+       "RRC is connected. The UE is not registered."),
+     s("Identity","gNB chooses an AMF","gNB","gNB","AMF selection","gNB AMF selection","N2","NGAP selection",
+       "The gNB picks an AMF before it forwards NAS. With no 5G-GUTI yet, it uses the requested NSSAI and its local AMF table. A later registration that already has a 5G-GUTI uses the GUAMI inside that GUTI so the UE returns to the same AMF when possible.",
+       ["Requested NSSAI","local AMF configuration","GUAMI when a 5G-GUTI already exists"],
+       "An AMF has been chosen. NAS has not left the gNB."),
+     s("Identity","UE is introduced to the AMF","gNB","AMF","Initial UE Message","NGAP Initial UE Message","N2","NGAP",
+       "The gNB forwards the Registration Request and adds radio context the AMF needs: where the UE is, why RRC was opened, and which PLMN was selected. This is the first time this UE appears at the AMF. The gNB does not read the NAS payload.",
+       ["NAS-PDU = Registration Request","User Location Information","RRC establishment cause","Selected PLMN"],
+       "AMF has the NAS request. UE is still unauthenticated.",
+       "In an NGAP trace look for InitialUEMessage. You will not see RRCSetupRequest on N2."),
+     s("Authentication","AMF starts 5G-AKA","AMF","AUSF","Authenticate Request","Nausf_UEAuthentication_Authenticate Request","N12","SBI HTTP/2",
+       "The AMF will not trust the Registration Request until the subscriber is authenticated. It asks the AUSF to run 5G-AKA. The serving-network name is included so the home network binds this authentication to this visited network.",
+       ["SUCI","Serving network name"],
+       "Authentication is started. No NAS security context yet."),
+     s("Authentication","Home network builds the challenge","AUSF","UDM","Auth vector request","Nudm_UEAuthentication_Get","N13","SBI HTTP/2",
+       "The AUSF asks the UDM for a 5G home authentication vector. The long-term key K never leaves the UDM. The UDM also de-conceals the SUCI back into the SUPI.",
+       ["SUCI","serving network name"],
+       "SUPI is known in the home network. The AMF still does not have K."),
+     s("Authentication","Vector returns to the AUSF","UDM","AUSF","5G HE AV","Authentication vector","N13","SBI HTTP/2",
+       "The UDM returns RAND, AUTN, XRES*, and KAUSF. KAUSF stays with the home side. The visited AMF is not given the long-term key or KAUSF.",
+       ["RAND","AUTN","XRES*","KAUSF (stays at AUSF / UDM side)"],
+       "AUSF can check the UE and later derive KSEAF."),
+     s("Authentication","AMF receives only the challenge","AUSF","AMF","RAND, AUTN, HXRES*","Authentication challenge for the AMF","N12","SBI HTTP/2",
+       "The AUSF gives the AMF the challenge to send to the UE and a hash of the expected result, HXRES*. The AMF can relay the challenge. It cannot derive the home key.",
+       ["RAND","AUTN","HXRES*"],
+       "AMF is ready to challenge the UE."),
+     s("Authentication","Network challenges the USIM","AMF","UE","Authentication Request","NAS Authentication Request","N1","5GMM",
+       "The AMF sends RAND, AUTN, ABBA, and the key set identifier ngKSI. The path is NAS inside N2, then RRC. The USIM checks AUTN, including the sequence number, so the UE also authenticates the network. ABBA stops a bidder from weakening the algorithm set.",
+       ["ngKSI","RAND","AUTN","ABBA"],
+       "UE is checking the network. NAS is still unprotected.",
+       "A MAC failure or a bad sequence number comes back as an Authentication Failure with AUTS, not as a Registration Reject."),
+     s("Authentication","UE proves it holds K","UE","AMF","Authentication Response","NAS Authentication Response","N1","5GMM",
+       "The USIM computes RES* from RAND and K. The UE returns RES*. This is the UE authenticating itself to the network.",
+       ["RES*"],
+       "Response is at the AMF, still to be checked by the AUSF."),
+     s("Authentication","AMF asks the home side to check RES*","AMF","AUSF","RES* check","Nausf_UEAuthentication_Authenticate confirmation","N12","SBI HTTP/2",
+       "The AMF forwards RES* to the AUSF. The AUSF compares it with XRES*. A match means the USIM and the home network used the same K.",
+       ["RES*"],
+       "Mutual authentication is being confirmed."),
+     s("Authentication","Anchor key is given to the AMF","AUSF","AMF","KSEAF","Authentication result and KSEAF","N12","SBI HTTP/2",
+       "On success the AUSF derives KSEAF from KAUSF and the serving-network name, and returns it to the AMF. The AMF derives Kamf from KSEAF. Kamf is the root for NAS integrity, NAS ciphering, and later the gNB key KgNB.",
+       ["Authentication result = success","KSEAF","Kamf derived at the AMF"],
+       "AMF holds Kamf. The UE can derive the same Kamf.",
+       "Key chain to remember: K, then KAUSF, then KSEAF, then Kamf, then Knas-int, Knas-enc, and KgNB."),
+     s("NAS security","AMF turns on NAS protection","AMF","UE","Security Mode Command","NAS Security Mode Command","N1","5GMM",
+       "The AMF picks integrity and ciphering algorithms and sends them with the replayed UE security capabilities. Replaying the capabilities stops a gNB or an attacker from pretending the UE is weaker than it is. This command is integrity protected with the new NAS key.",
+       ["Selected NAS algorithms","ngKSI","Replayed UE security capabilities","IMEISV request, if needed"],
+       "UE is installing the NAS security context."),
+     s("NAS security","UE confirms NAS security","UE","AMF","Security Mode Complete","NAS Security Mode Complete","N1","5GMM",
+       "The UE installs the NAS security context and answers. From this message on, NAS is integrity protected and ciphered. If the AMF asked for the IMEI, IMEISV is carried here.",
+       ["NAS message container, now protected","IMEISV when requested"],
+       "NAS security is active. The UE is still not fully registered."),
+     s("Subscription","AMF registers as the serving AMF","AMF","UDM","UECM Registration","Nudm_UECM_Registration","N8","SBI HTTP/2",
+       "The AMF tells the UDM that it is the serving AMF for this SUPI. Later paging, SMS, and policy updates can find this UE. A previous AMF, if any, is replaced.",
+       ["SUPI","AMF identity","PEI if known","access type = 3GPP"],
+       "UDM knows which AMF serves the UE."),
+     s("Subscription","AMF reads what the UE is allowed to do","AMF","UDM","SDM Get","Nudm_SDM_Get","N8","SBI HTTP/2",
+       "The AMF pulls access and mobility subscription data: subscribed slices, default NSSAI, UE-AMBR, and forbidden areas. It also subscribes to later changes.",
+       ["SUPI","dataset = access and mobility subscription"],
+       "Request is in flight toward the UDM."),
+     s("Subscription","Subscription data comes back","UDM","AMF","Subscription data","Access and mobility subscription","N8","SBI HTTP/2",
+       "The AMF stores the subscription. The allowed NSSAI in Registration Accept is the overlap of what the UE requested, what the subscription allows, and what this tracking area supports.",
+       ["Subscribed S-NSSAI","Default S-NSSAI","UE-AMBR","Forbidden areas"],
+       "AMF can build the allowed NSSAI."),
+     s("Subscription","Access policy is attached","AMF","PCF","AM policy","Npcf_AMPolicyControl_Create","N15","SBI HTTP/2",
+       "The AMF opens an access and mobility policy association. The PCF can return an RFSP index, service-area restrictions, and a UE-AMBR override. This is mobility policy. Session QoS is decided later by the SMF and PCF on N7.",
+       ["SUPI","serving AMF","access type"],
+       "AM policy association exists. PDU session policy does not."),
+     s("Accept","Registration Accept and the RAN key","AMF","gNB","Initial Context Setup","NGAP Initial Context Setup Request with Registration Accept","N2","NGAP + 5GMM",
+       "The AMF sends Registration Accept inside the initial context setup. The accept carries the new 5G-GUTI, the TAI list, the allowed NSSAI, and the periodic registration timer. The same NGAP message gives the gNB the security key KgNB and the UE security capabilities so the radio can be protected.",
+       ["5G-GUTI","TAI list","Allowed NSSAI","T3512","KgNB","UE security capabilities"],
+       "gNB has the UE context and KgNB. The UE has not seen the accept yet.",
+       "KgNB is derived from Kamf. The gNB then derives Krrc and Kup. The AMF does not send those radio keys."),
+     s("AS security","Radio security is activated","gNB","UE","AS SecurityModeCommand","RRC SecurityModeCommand","Uu","NR RRC",
+       "The gNB starts AS security on SRB1. The UE derives the RRC and user-plane keys from KgNB and checks the integrity of this command. This is radio security. It is separate from the NAS Security Mode Command that already finished.",
+       ["cipheringAlgorithm","integrityProtAlgorithm"],
+       "AS integrity and ciphering start on SRB1."),
+     s("AS security","UE confirms radio security","UE","gNB","AS SecurityModeComplete","RRC SecurityModeComplete","Uu","NR RRC",
+       "The UE confirms that AS security is active. Further RRC, including the NAS accept, is protected.",
+       ["SecurityModeComplete"],
+       "SRB1 is integrity protected and ciphered."),
+     s("Accept","UE receives Registration Accept","gNB","UE","Registration Accept","DLInformationTransfer with NAS Registration Accept","Uu","RRC + 5GMM",
+       "The gNB delivers Registration Accept on the protected SRB1. The UE stores the 5G-GUTI, the registration area, and the allowed slices. There is still no data radio bearer and no IP address.",
+       ["5G-GUTI","Allowed NSSAI","TAI list","T3512"],
+       "UE has the accept. It still owes Registration Complete."),
+     s("Accept","UE confirms the new identity","UE","AMF","Registration Complete","NAS Registration Complete","N1","5GMM",
+       "Registration Complete acknowledges the new 5G-GUTI. The gNB forwards it as Uplink NAS Transport. The AMF can retire the old temporary identity.",
+       ["5G-GUTI acknowledgement"],
+       "NAS registration transaction is complete."),
+     s("Accept","gNB confirms the UE context","gNB","AMF","ICS Response","NGAP Initial Context Setup Response","N2","NGAP",
+       "The gNB confirms that the UE context is installed. The UE is RM-REGISTERED and CM-CONNECTED. The data path is created next, by PDU Session Establishment.",
+       ["AMF UE NGAP ID","RAN UE NGAP ID"],
+       "RM-REGISTERED, CM-CONNECTED. No PDU session, no IP address, no DRB.")
+   ]},
+  {id:"sa-pdu", mode:"SA", kind:"signalling", title:"PDU Session Establishment",
+   spec:"TS 23.502 §4.3.2.2.1 · TS 29.244",
+   goal:"After registration, the UE opens a data session for one slice and one DNN. This creates the QoS rules, the UE IP address, the DRB, and the N3 tunnel between gNB and UPF.",
+   end:"A PDU session is active. User plane path is UE, DRB, gNB, N3, UPF, N6, data network.",
+   nodes:nodes("UE","gNB","AMF","SMF","PCF","UDM","UPF"),
+   steps:[
+     s("Request","UE asks for a data session","UE","AMF","PDU Session Request","NAS PDU Session Establishment Request","N1","5GSM inside 5GMM",
+       "The UE sends a session request for a new PDU session ID. It names the slice (S-NSSAI), the data network (DNN), the IP type, and the SSC mode. The AMF carries this 5GSM message. It does not choose the UPF or the IP address.",
+       ["PDU session ID","PDU session type (IPv4, IPv6, IPv4v6, Ethernet)","DNN","S-NSSAI","SSC mode"],
+       "UE is registered. The session does not exist yet.",
+       "SSC mode 1 keeps the same anchor. SSC mode 2 and 3 allow the anchor to move. Consumer internet is usually SSC 1."),
+     s("Request","AMF selects an SMF and opens the context","AMF","SMF","Create SM context","Nsmf_PDUSession_CreateSMContext","N11","SBI HTTP/2",
+       "The AMF selects an SMF for this S-NSSAI and DNN, often through NRF, and creates the SM context. From here the SMF owns the session. The AMF remains the NAS and N2 relay.",
+       ["SUPI","PDU session ID","DNN","S-NSSAI","UE location","access type = 3GPP"],
+       "SMF has a new SM context."),
+     s("Policy","SMF checks the session subscription","SMF","UDM","SM data request","Nudm_SDM_Get for session management","N10","SBI HTTP/2",
+       "The SMF checks that this SUPI may use this DNN and slice. It also reads session AMBR, static IP information, and the allowed SSC modes, and registers itself for this PDU session.",
+       ["SUPI","DNN","S-NSSAI"],
+       "SMF is waiting for subscription data."),
+     s("Policy","Subscription answers","UDM","SMF","SM subscription","Session management subscription data","N10","SBI HTTP/2",
+       "The UDM returns the session profile. If the DNN is not subscribed, the SMF rejects the PDU session and the UE receives a 5GSM cause. A successful answer lets the SMF continue to policy.",
+       ["Subscribed session-AMBR","Static IP or dynamic","Allowed PDU session types","Default QoS"],
+       "SMF knows the subscriber limits for this DNN."),
+     s("Policy","PCF decides the service rules","SMF","PCF","SM policy create","Npcf_SMPolicyControl_Create","N7","SBI HTTP/2",
+       "The SMF asks the PCF for session policy. The PCF returns PCC rules: 5QI, bit rates, charging, and gating. A default QoS flow is created here. A later modification procedure adds dedicated flows, for example voice.",
+       ["SUPI","DNN","S-NSSAI","PDU session type"],
+       "PCC rules are available to the SMF."),
+     s("User plane","SMF selects the UPF and the IP address","SMF","SMF","UPF and IP selection","UPF selection and UE IP allocation","N4","SMF decision",
+       "The SMF picks a UPF that can reach this DNN and is suitable for the UE location. The UE IPv4 or IPv6 address comes from a pool at that UPF, or from a static address in the subscription. This path uses one UPF. An I-UPF is inserted only if the UE later moves far from this anchor.",
+       ["DNN","UE location","UPF service area","IP pool or static IP"],
+       "UPF is chosen. N4 is not programmed yet."),
+     s("User plane","SMF programs the UPF","SMF","UPF","PFCP Establishment","PFCP Session Establishment Request","N4","PFCP",
+       "The SMF installs packet rules. A PDR matches packets, a FAR forwards, drops, or buffers them, a QER enforces bit rate, and a URR counts usage. The uplink rule matches the future N3 tunnel. The downlink rule cannot point at the gNB yet, because the RAN tunnel does not exist.",
+       ["PDR","FAR","QER","URR","PDN instance / DNN"],
+       "UPF is being programmed. Downlink will buffer until N3 exists."),
+     s("User plane","UPF returns the core tunnel and the UE IP","UPF","SMF","N3 TEID + UE IP","PFCP Session Establishment Response","N4","PFCP",
+       "The UPF returns its N3 endpoint, an IP address plus a TEID, and the UE IP address it allocated. The core side of the user-plane tunnel is ready.",
+       ["UPF N3 F-TEID","UE IP address"],
+       "Core N3 endpoint exists. RAN N3 endpoint does not."),
+     s("RAN setup","SMF sends the accept and the RAN request","SMF","AMF","N1N2 transfer","N1N2 message transfer","N11","SBI HTTP/2",
+       "The SMF gives the AMF two containers. N1 is the NAS PDU Session Establishment Accept: UE IP, QoS rules, session AMBR, and S-NSSAI. N2 is the setup transfer: QoS flows and the UPF N3 TEID. The AMF does not rewrite them.",
+       ["N1 SM: PDU Session Establishment Accept","UE IP","QoS rules","N2 SM: UPF N3 TEID","QoS flow list"],
+       "AMF has both containers to deliver."),
+     s("RAN setup","AMF asks the gNB to build the bearers","AMF","gNB","Resource Setup Request","NGAP PDU Session Resource Setup Request","N2","NGAP",
+       "The AMF tells the gNB which PDU session to set up. The gNB maps each QoS flow onto a data radio bearer using SDAP, and allocates its own N3 TEID.",
+       ["PDU session ID","QoS flow setup list","UPF N3 F-TEID","session AMBR","NAS PDU"],
+       "gNB is admitting DRBs."),
+     s("RAN setup","UE learns its IP address and DRB","gNB","UE","RRCReconfiguration","RRCReconfiguration plus NAS Accept","Uu","RRC + 5GSM",
+       "The gNB sends the DRB, PDCP, RLC, and SDAP config, and delivers the NAS accept. The UE installs the QoS rules and learns its IP address. Uplink on this DRB can start.",
+       ["DRB config","SDAP mapping","PDCP config","PDU Session Establishment Accept","UE IP"],
+       "Radio bearer exists. Downlink from the UPF is still on the old tunnel."),
+     s("RAN setup","UE confirms the radio bearer","UE","gNB","RRCReconfigurationComplete","RRCReconfigurationComplete","Uu","NR RRC",
+       "The UE confirms that the DRB is up.",
+       ["RRCReconfigurationComplete"],
+       "DRB is active."),
+     s("RAN setup","gNB returns its N3 tunnel","gNB","AMF","Setup Response","NGAP PDU Session Resource Setup Response","N2","NGAP",
+       "The gNB reports the N3 endpoint it allocated and which QoS flows were admitted. A flow the radio rejected is listed as failed.",
+       ["gNB N3 F-TEID","QoS flow setup response list"],
+       "AMF has the RAN tunnel endpoint."),
+     s("User plane","AMF gives the RAN tunnel to the SMF","AMF","SMF","Update SM context","Nsmf_PDUSession_UpdateSMContext","N11","SBI HTTP/2",
+       "The AMF passes the gNB N3 address and TEID to the SMF. This is what the UPF has been waiting for.",
+       ["gNB N3 F-TEID","PDU session ID"],
+       "SMF can now aim downlink at the gNB."),
+     s("User plane","Downlink is pointed at the gNB","SMF","UPF","PFCP Modification","PFCP Session Modification Request","N4","PFCP",
+       "The SMF updates the downlink FAR. The UPF sends GTP-U to the gNB N3 TEID and stops buffering. The path is complete: UE, DRB, gNB, N3, UPF, N6, data network.",
+       ["DL FAR = gNB N3 F-TEID","buffering flag cleared"],
+       "User plane is up in both directions."),
+     s("Data","First uplink packet","UE","gNB","Uplink on DRB","User IP packet on the DRB","Uu","SDAP / PDCP / RLC",
+       "An application packet leaves the UE on the new DRB. SDAP marks the QoS flow. PDCP ciphers it. The gNB is the next hop, not the AMF.",
+       ["QFI","PDCP sequence number"],
+       "Uplink has reached the gNB."),
+     s("Data","gNB sends it to the UPF","gNB","UPF","N3 GTP-U","GTP-U uplink on N3","N3","GTP-U",
+       "The gNB encapsulates the packet toward the UPF N3 TEID. This tunnel does not pass through the AMF or the SMF. The SMF only controls it through PFCP on N4. The UPF decapsulates and sends the IP packet to the data network on N6.",
+       ["Outer GTP-U TEID = UPF N3","Inner UE IP packet"],
+       "PDU session is in service. Downlink uses the gNB N3 TEID programmed in the previous PFCP step.")
+   ]},
+  {id:"sa-sr", mode:"SA", kind:"signalling", title:"Service Request",
+   spec:"TS 23.502 §4.2.3.2",
+   goal:"The UE is already registered but CM-IDLE. Radio and the N3 tunnel were released. This procedure brings the UE back to CM-CONNECTED and turns the existing PDU session back on. It does not create a new registration or a new PDU session.",
+   end:"CM-CONNECTED again. The same PDU session is forwarding.",
+   nodes:nodes("UE","gNB","AMF","SMF","UPF"),
+   steps:[
+     s("Radio","UE returns to RRC","UE","gNB","RRCSetupRequest","RRCSetupRequest","Uu","NR RRC",
+       "Uplink data or a paging response needs a radio connection. The UE starts RRC with cause mo-Data or mt-Access. The gNB has no UE context from the idle period.",
+       ["establishmentCause","random UE identity"],
+       "RACH started. AMF context still holds the registration."),
+     s("Radio","SRB1 comes back","gNB","UE","RRCSetup","RRCSetup","Uu","NR RRC",
+       "The gNB creates a new SRB1. AS security is not on yet. The old DRBs are gone.",
+       ["SRB1 config"],
+       "RRC connected, no DRB, no AS security."),
+     s("NAS","Service Request identifies the UE","UE","gNB","Service Request","RRCSetupComplete with NAS Service Request","Uu","RRC + 5GMM",
+       "The UE sends a Service Request with its 5G-S-TMSI and the list of PDU sessions that need to wake up. The request is integrity protected with the existing NAS context.",
+       ["5G-S-TMSI","service type","uplink data status","PDU session status","ngKSI"],
+       "gNB has a NAS PDU and a temporary identity. It still has no UE context."),
+     s("NAS","AMF finds the stored context","gNB","AMF","Initial UE Message","NGAP Initial UE Message","N2","NGAP",
+       "Because the gNB has no UE context, this is an Initial UE Message, not an Uplink NAS Transport. The AMF uses the 5G-S-TMSI to find the UE and checks the NAS integrity with Kamf. The UE is already RM-REGISTERED.",
+       ["NAS-PDU = Service Request","5G-S-TMSI","User location"],
+       "AMF has identified the UE. N3 is still down.",
+       "If the integrity check fails, the AMF rejects the service request or starts authentication again."),
+     s("User plane","AMF asks the SMF to wake the session","AMF","SMF","Update SM context","Nsmf_PDUSession_UpdateSMContext, UP activation","N11","SBI HTTP/2",
+       "For each PDU session the UE wants active, the AMF tells the SMF to reactivate the user plane. The SMF still owns the session, the IP address, and the UPF.",
+       ["PDU session ID","UP activation requested","UE location"],
+       "SMF is preparing N2 information."),
+     s("User plane","SMF confirms the UPF is ready to forward","SMF","UPF","PFCP ready","PFCP Session Modification, prepare tunnel","N4","PFCP",
+       "The SMF makes sure the UPF still has the session and will buffer downlink until the new gNB tunnel arrives. The UE IP address does not change.",
+       ["Existing PFCP session","buffer downlink"],
+       "UPF session is intact. RAN TEID is still unknown."),
+     s("RAN setup","AMF sets up the gNB context and the DRBs","AMF","gNB","Initial Context Setup","NGAP Initial Context Setup Request","N2","NGAP",
+       "The AMF sends the security context, KgNB, and the PDU session resource setup. The gNB can protect the radio and rebuild the DRBs. The UPF N3 TEID is inside the N2 SM container from the SMF.",
+       ["UE security capabilities","KgNB","PDU session resource setup list","UPF N3 TEID"],
+       "gNB can admit the UE again."),
+     s("RAN setup","DRBs return","gNB","UE","RRCReconfiguration","AS security plus RRCReconfiguration","Uu","NR RRC",
+       "The gNB runs AS security and reconfigures the DRBs for the QoS flows that are waking up. The UE can send uplink again.",
+       ["AS security","DRB config","SDAP"],
+       "UE is on radio with DRBs."),
+     s("RAN setup","gNB reports its new tunnel","gNB","AMF","ICS Response","Initial Context Setup Response","N2","NGAP",
+       "The gNB returns the new N3 TEID. It can differ from the TEID used before idle, because this is a new RAN context.",
+       ["gNB N3 F-TEID"],
+       "AMF has the new RAN endpoint."),
+     s("Data","Downlink is restored","AMF","SMF","AN tunnel info","UpdateSMContext with gNB N3 TEID","N11","SBI HTTP/2",
+       "The AMF gives the new gNB tunnel to the SMF.",
+       ["gNB N3 F-TEID"],
+       "SMF can update the UPF."),
+     s("Data","UPF sends buffered downlink","SMF","UPF","PFCP Modification","PFCP Session Modification","N4","PFCP",
+       "The downlink FAR now points at the new gNB. Buffered packets go out on N3. The UE is CM-CONNECTED on the same PDU session it had before idle.",
+       ["DL FAR = new gNB N3","buffering cleared"],
+       "CM-CONNECTED. PDU session forwarding. Registration was not repeated.")
+   ]},
+  {id:"sa-an", mode:"SA", kind:"signalling", title:"AN Release",
+   spec:"TS 23.502 §4.2.6",
+   goal:"The gNB releases the radio when the UE goes quiet. Registration and the PDU session stay. Only the radio context and the live N3 forwarding stop. The next uplink uses Service Request.",
+   end:"RM-REGISTERED, CM-IDLE. PDU session remains at the SMF and UPF. Downlink is buffered.",
+   nodes:nodes("UE","gNB","AMF","SMF","UPF"),
+   steps:[
+     s("Release","gNB reports inactivity","gNB","AMF","Context Release Request","NGAP UE Context Release Request","N2","NGAP",
+       "The gNB has seen no useful traffic. It asks the AMF to release the UE context. The cause is typically user inactivity. The AMF is the node that coordinates the release, because the SMF and UPF must stop sending to this gNB.",
+       ["Cause = user inactivity","UE NGAP IDs"],
+       "UE is still CM-CONNECTED while the release runs."),
+     s("Release","AMF tells the SMF the access leg is going away","AMF","SMF","Deactivate UP","UpdateSMContext, UP deactivated","N11","SBI HTTP/2",
+       "The AMF tells the SMF that the access network tunnel will disappear. The PDU session itself stays.",
+       ["UP connection state = deactivated","UE location"],
+       "SMF will move the UPF to buffering."),
+     s("Release","UPF buffers instead of forwarding","SMF","UPF","PFCP buffer","PFCP Session Modification","N4","PFCP",
+       "The SMF removes the live gNB tunnel from the downlink FAR and tells the UPF to buffer downlink. The UE IP address and the PFCP session remain.",
+       ["DL FAR = buffer","gNB TEID removed"],
+       "Downlink will wait at the UPF."),
+     s("Release","AMF orders the gNB to drop the UE","AMF","gNB","Context Release Command","NGAP UE Context Release Command","N2","NGAP",
+       "The AMF tells the gNB to release the radio context.",
+       ["Cause","UE NGAP IDs"],
+       "gNB will release RRC."),
+     s("Release","UE leaves RRC connected","gNB","UE","RRCRelease","RRCRelease","Uu","NR RRC",
+       "The gNB sends RRCRelease. The UE keeps its NAS security context and its 5G-GUTI, and camps on the cell. This basic procedure ends in CM-IDLE. RRC Inactive is a separate optimization that keeps a suspended AS context.",
+       ["RRCRelease"],
+       "UE is idle on the radio. NAS registration remains."),
+     s("Release","gNB confirms the context is gone","gNB","AMF","Context Release Complete","NGAP UE Context Release Complete","N2","NGAP",
+       "The gNB has deleted the UE context. The AMF marks the UE CM-IDLE and keeps the registration. The next uplink data starts a Service Request.",
+       ["UE Context Release Complete"],
+       "RM-REGISTERED, CM-IDLE. PDU session retained at SMF and UPF.")
+   ]},
+  {id:"sa-xn", mode:"SA", kind:"signalling", title:"Xn Handover",
+   spec:"TS 23.502 §4.9.1.2 · TS 38.300",
+   goal:"The UE moves to a neighbour gNB that has a direct Xn interface. The two gNBs prepare the move. The AMF is told afterwards, in the path switch, so the UPF aims downlink at the new gNB.",
+   end:"UE is served by the target gNB. N3 ends at the target. The AMF did not relocate.",
+   nodes:nodes("UE","Src","Tgt","AMF","SMF","UPF"),
+   steps:[
+     s("Measure","Neighbour cell becomes better","UE","Src","Measurement Report","MeasurementReport, event A3","Uu","NR RRC",
+       "The UE reports that a neighbour NR cell is better than the serving cell by the A3 offset. The source gNB decides on handover. The AMF is not involved in this measurement.",
+       ["measId","neighbour PCI","RSRP or RSRQ"],
+       "Source gNB is choosing a target."),
+     s("Prepare","Source asks the target for resources","Src","Tgt","Handover Request","XnAP Handover Request","Xn-C","XnAP",
+       "The source sends the UE context over Xn: PDU sessions, QoS flows, security, and a forwarding tunnel. The target can admit the UE before the UE leaves the source.",
+       ["UE context","PDU session resources","security information","source TNL for forwarding"],
+       "Target is running admission."),
+     s("Prepare","Target reserves the cell","Tgt","Src","Handover Request Ack","XnAP Handover Request Acknowledge","Xn-C","XnAP",
+       "The target admits the QoS flows, allocates a C-RNTI, and returns an RRC container. That container is the handover command the source will forward to the UE. It also returns forwarding TEIDs.",
+       ["Target RRC config","C-RNTI","admitted QoS flows","forwarding TEIDs"],
+       "Target resources are reserved. The UE has not moved."),
+     s("Execute","UE is told to move","Src","UE","RRCReconfiguration","RRCReconfiguration with reconfigurationWithSync","Uu","NR RRC",
+       "The source gives the UE the target PCI, the new C-RNTI, and the random-access config. The UE leaves the source cell.",
+       ["target PCI","new C-RNTI","RACH config"],
+       "UE is moving. In-flight downlink can be forwarded."),
+     s("Execute","In-flight data follows the UE","Src","Tgt","Xn-U forwarding","Data forwarding over Xn-U","Xn-U","GTP-U",
+       "The source forwards downlink packets that have not been acknowledged, so the target can send them after the UE arrives. This is a temporary tunnel.",
+       ["Forwarding TEID","PDCP PDUs"],
+       "UE is on the way to the target."),
+     s("Execute","UE arrives on the target","UE","Tgt","RACH + RRC complete","Random access then RRCReconfigurationComplete","Uu","NR RRC",
+       "The UE performs random access on the target cell and sends RRCReconfigurationComplete. The target is now the serving gNB on the radio. The core user plane is still aimed at the source until the path switch.",
+       ["RACH","RRCReconfigurationComplete"],
+       "Radio is on the target. N3 downlink is still on the source."),
+     s("Path switch","Target tells the AMF where the UE is","Tgt","AMF","Path Switch Request","NGAP Path Switch Request","N2","NGAP",
+       "The target reports the new downlink tunnel for each PDU session. This is the first N2 message of an Xn handover. Preparation did not go through the AMF.",
+       ["PDU session resource to be switched","target gNB N3 F-TEID"],
+       "AMF knows the new RAN endpoint."),
+     s("Path switch","AMF asks the SMF to move N3","AMF","SMF","Update SM context","Nsmf_PDUSession_UpdateSMContext","N11","SBI HTTP/2",
+       "The AMF passes the target tunnel to the SMF.",
+       ["Target N3 F-TEID","PDU session ID"],
+       "SMF will update the UPF."),
+     s("Path switch","UPF switches downlink","SMF","UPF","PFCP Modification","PFCP Session Modification","N4","PFCP",
+       "The downlink FAR now points at the target gNB. The UPF sends an end marker on the old tunnel so the source knows downlink has moved.",
+       ["DL FAR = target gNB N3","end marker on the old tunnel"],
+       "N3 ends at the target."),
+     s("Path switch","Path switch is confirmed","AMF","Tgt","Path Switch Ack","NGAP Path Switch Request Acknowledge","N2","NGAP",
+       "The AMF confirms the path switch. Core downlink matches the radio.",
+       ["Path Switch Request Acknowledge"],
+       "Target is fully serving."),
+     s("Release","Source is released","Tgt","Src","UE Context Release","XnAP UE Context Release","Xn-C","XnAP",
+       "The target tells the source to drop the UE context and the forwarding tunnels. The AMF stayed. Only the gNB and the N3 endpoint changed.",
+       ["Source UE XnAP ID"],
+       "UE is on the target gNB. N3 ends at the target. AMF unchanged.")
+   ]},
+  {id:"sa-n2", mode:"SA", kind:"signalling", title:"N2 Handover",
+   spec:"TS 23.502 §4.9.1.3",
+   goal:"There is no usable Xn between the gNBs, so the AMF relays handover preparation. Use this when Xn is missing. When Xn exists, Xn handover is the shorter path.",
+   end:"UE is on the target gNB. N3 has moved. Source context is released by the AMF.",
+   nodes:nodes("UE","Src","AMF","Tgt","SMF","UPF"),
+   steps:[
+     s("Prepare","Source asks the AMF to move the UE","Src","AMF","Handover Required","NGAP Handover Required","N2","NGAP",
+       "The source has a measurement report and no direct Xn it can use. It sends Handover Required with the target cell ID and the PDU sessions to move.",
+       ["Target ID","PDU session list","direct forwarding path availability"],
+       "AMF will select the target gNB and relay preparation."),
+     s("Prepare","AMF asks the target to admit the UE","AMF","Tgt","Handover Request","NGAP Handover Request","N2","NGAP",
+       "The AMF sends the UE context and the QoS flows to the target gNB.",
+       ["UE security","PDU sessions","source to target transparent container"],
+       "Target is in admission."),
+     s("Prepare","Target returns the handover command","Tgt","AMF","Handover Request Ack","NGAP Handover Request Acknowledge","N2","NGAP",
+       "The target reserves resources and returns the RRC handover command inside a transparent container, plus its tunnel endpoints.",
+       ["Target to source transparent container","admitted PDU sessions"],
+       "AMF can order the source to send the UE."),
+     s("Execute","AMF delivers the command to the source","AMF","Src","Handover Command","NGAP Handover Command","N2","NGAP",
+       "The AMF forwards the target RRC container to the source.",
+       ["Target to source transparent container"],
+       "Source is about to send the UE away."),
+     s("Execute","UE is ordered onto the target cell","Src","UE","RRC handover command","RRCReconfiguration with reconfigurationWithSync","Uu","NR RRC",
+       "The UE receives the target cell config and leaves the source.",
+       ["Target PCI","C-RNTI","RACH config"],
+       "UE is moving."),
+     s("Execute","UE confirms on the target","UE","Tgt","UE arrives","Random access and RRCReconfigurationComplete","Uu","NR RRC",
+       "The UE completes random access on the target.",
+       ["RRCReconfigurationComplete"],
+       "Radio is on the target. Core path may still be old."),
+     s("Execute","Target tells the AMF the UE has arrived","Tgt","AMF","Handover Notify","NGAP Handover Notify","N2","NGAP",
+       "Handover Notify means the target really has the UE. The AMF can now switch the core tunnels. In Xn handover the equivalent signal is Path Switch Request.",
+       ["Handover Notify"],
+       "AMF starts the N3 update."),
+     s("Path switch","SMF and UPF move N3","AMF","SMF","Update SM context","UpdateSMContext then PFCP modification","N11","SBI + PFCP",
+       "The AMF gives the target N3 TEID to the SMF. The SMF updates the UPF downlink FAR, the same user-plane result as an Xn path switch. An end marker closes the old tunnel.",
+       ["Target gNB N3 F-TEID"],
+       "Downlink goes to the target."),
+     s("Release","AMF releases the source","AMF","Src","Context Release Command","NGAP UE Context Release Command","N2","NGAP",
+       "The AMF tells the source gNB to drop the UE. In Xn handover the target does this directly. Here the AMF does it, because the source and target never spoke.",
+       ["Cause = successful handover"],
+       "Source will release."),
+     s("Release","Source confirms","Src","AMF","Context Release Complete","UE Context Release Complete","N2","NGAP",
+       "The source context is gone. The UE remains registered to the same AMF in this study path. AMF relocation is a further branch when the target is outside this AMF set.",
+       ["UE Context Release Complete"],
+       "UE is served by the target gNB. N3 ends at the target.")
+   ]},
+  {id:"sa-mod", mode:"SA", kind:"signalling", title:"Add a QoS flow",
+   spec:"TS 23.502 §4.3.3",
+   goal:"The PDU session already exists. The PCF adds a dedicated QoS flow, for example a GBR flow for voice, without opening a second PDU session.",
+   end:"The PDU session has an extra QoS flow mapped to a DRB. The original default flow remains.",
+   nodes:nodes("UE","gNB","AMF","SMF","PCF","UPF"),
+   steps:[
+     s("Policy","PCF pushes a new rule","PCF","SMF","Policy update","Npcf_SMPolicyControl_UpdateNotify","N7","SBI HTTP/2",
+       "The PCF installs a new PCC rule on the existing session. The rule names a 5QI, and for a GBR flow the guaranteed and maximum bit rates. The DNN, slice, and UE IP stay as they are.",
+       ["PCC rule","5QI","GBR and MBR when GBR","packet filter"],
+       "SMF must realize the rule on N4 and on the radio."),
+     s("User plane","SMF updates the UPF rules","SMF","UPF","PFCP Modification","PFCP Session Modification","N4","PFCP",
+       "The SMF adds a PDR and QER so the UPF can classify this flow and enforce its rate. The N3 tunnel can stay the same. QoS flows share the PDU session tunnel and are distinguished by the QFI.",
+       ["New PDR","QER for the 5QI","QFI"],
+       "UPF can classify the new flow."),
+     s("RAN setup","SMF sends the modification","SMF","AMF","N1N2 transfer","PDU Session Modification Command plus N2 QoS flow add","N11","SBI HTTP/2",
+       "N1 carries PDU Session Modification Command so the UE learns the new QoS rule. N2 asks the gNB to add the QoS flow.",
+       ["QFI","QoS profile","NAS QoS rule"],
+       "AMF will relay both containers."),
+     s("RAN setup","gNB is asked to add the flow","AMF","gNB","Resource Modify Request","NGAP PDU Session Resource Modify Request","N2","NGAP",
+       "The gNB maps the new QFI to an existing DRB or opens a new DRB.",
+       ["QoS flow add or modify list","QFI"],
+       "gNB is updating the UE radio config."),
+     s("RAN setup","UE receives the new QoS rule","gNB","UE","RRCReconfiguration","RRCReconfiguration and NAS Modification Command","Uu","RRC + 5GSM",
+       "The UE installs the QoS rule and the radio config. Packets that match the new filter use the new QFI.",
+       ["DRB or SDAP update","QoS rule","QFI"],
+       "UE has the rule. It still confirms NAS."),
+     s("RAN setup","Radio confirms","UE","gNB","RRC complete","RRCReconfigurationComplete","Uu","NR RRC",
+       "The radio change is done.",
+       ["RRCReconfigurationComplete"],
+       "DRB mapping is active."),
+     s("Confirm","gNB reports the result","gNB","AMF","Modify Response","PDU Session Resource Modify Response","N2","NGAP",
+       "The gNB says which QoS flows were added.",
+       ["QoS flow add or modify response"],
+       "AMF can inform the SMF."),
+     s("Confirm","UE confirms the QoS rule","UE","AMF","Modification Complete","NAS PDU Session Modification Complete","N1","5GSM",
+       "The UE confirms the 5GSM command. The AMF forwards the result to the SMF. The session now has the original default QoS flow and the new dedicated flow.",
+       ["PDU session ID","accepted QoS rules"],
+       "Dedicated QoS flow is active on the same PDU session.")
+   ]},
+  {id:"sa-dereg", mode:"SA", kind:"signalling", title:"Deregistration",
+   spec:"TS 23.502 §4.2.2.3",
+   goal:"The UE leaves the 5G system. Every PDU session is released, the radio context is dropped, and the UDM forgets this AMF as the serving AMF.",
+   end:"RM-DEREGISTERED. The next attach is a fresh Initial Registration.",
+   nodes:nodes("UE","gNB","AMF","SMF","UPF","UDM","PCF"),
+   steps:[
+     s("Request","UE asks to leave","UE","AMF","Deregistration Request","NAS Deregistration Request","N1","5GMM",
+       "The UE sends Deregistration Request. This study path is a normal deregistration, so the network still answers. A switch-off request skips Deregistration Accept because the UE may already be gone.",
+       ["Deregistration type = normal","access type = 3GPP","ngKSI"],
+       "AMF will tear down sessions before it answers."),
+     s("Sessions","AMF releases each PDU session","AMF","SMF","Release SM context","Nsmf_PDUSession_ReleaseSMContext","N11","SBI HTTP/2",
+       "The AMF tells the SMF to delete every PDU session for this access.",
+       ["PDU session ID","cause"],
+       "SMF starts deleting the user plane."),
+     s("Sessions","UPF session is deleted","SMF","UPF","PFCP Deletion","PFCP Session Deletion","N4","PFCP",
+       "The UPF drops the PDR, FAR, and N3 tunnel and releases the UE IP address back to the pool.",
+       ["PFCP Session Deletion"],
+       "User plane for this session is gone."),
+     s("Sessions","Policy and subscription bindings are removed","SMF","PCF","SM policy delete","SM policy delete, and SMF deregisters at UDM","N7","SBI HTTP/2",
+       "The SMF deletes the SM policy association and deregisters the PDU session at the UDM. The same happens for every session.",
+       ["SM policy association id","PDU session id at UDM"],
+       "No PDU session remains."),
+     s("Accept","AMF accepts the deregistration","AMF","UE","Deregistration Accept","NAS Deregistration Accept","N1","5GMM",
+       "On the normal path the AMF confirms. The UE deletes its NAS context.",
+       ["Deregistration Accept"],
+       "UE will drop NAS context."),
+     s("Radio","Radio context is released","AMF","gNB","Context Release Command","UE Context Release Command, then RRCRelease","N2","NGAP",
+       "The AMF tells the gNB to release the UE. The gNB sends RRCRelease.",
+       ["UE Context Release Command"],
+       "RRC is going down."),
+     s("Cleanup","AM policy is removed","AMF","PCF","AM policy delete","Npcf_AMPolicyControl_Delete","N15","SBI HTTP/2",
+       "The access and mobility policy association is deleted.",
+       ["AM policy association id"],
+       "PCF no longer holds this UE at this AMF."),
+     s("Cleanup","UDM forgets the serving AMF","AMF","UDM","UECM Deregistration","Nudm_UECM_Deregistration","N8","SBI HTTP/2",
+       "The AMF deregisters itself. The UE is RM-DEREGISTERED. The next time it wants service it runs Initial Registration, including authentication, again.",
+       ["SUPI","AMF id"],
+       "RM-DEREGISTERED. No serving AMF.")
+   ]},
+  {id:"nsa-att", mode:"NSA", kind:"signalling", title:"LTE Attach",
+   spec:"TS 23.401",
+   goal:"NSA starts on LTE. The UE attaches to the EPC, gets a default EPS bearer and an IP address, and only then can add NR. The eNB in this flow becomes the master eNB once EN-DC starts.",
+   end:"EMM-REGISTERED, ECM-CONNECTED. Default bearer is up. NR is not added yet.",
+   nodes:nodes("UE","eNB","MME","HSS","SGW","PGW"),
+   steps:[
+     s("Radio","UE opens LTE RRC","UE","eNB","RRCConnectionRequest","RRCConnectionRequest","Uu","LTE RRC",
+       "The UE starts an LTE RRC connection. The message name still uses Connection, which is the LTE spelling. NR later uses RRCSetupRequest.",
+       ["ue-Identity","establishmentCause = mo-Signalling"],
+       "LTE RACH is under way."),
+     s("Radio","SRB1 on LTE","eNB","UE","RRCConnectionSetup","RRCConnectionSetup","Uu","LTE RRC",
+       "The eNB creates LTE SRB1.",
+       ["SRB1"],
+       "LTE RRC is up."),
+     s("NAS","Attach Request and a PDN request","UE","eNB","Attach Request","RRCConnectionSetupComplete with Attach Request and PDN Connectivity Request","Uu","RRC + EMM/ESM",
+       "The UE sends Attach Request and, inside it, PDN Connectivity Request. Unlike 5G registration, the data session is requested in the same procedure. The UE asks for an APN and an IP type. There is no S-NSSAI in EPC.",
+       ["IMSI or GUTI","UE network capability","PDN type","APN"],
+       "NAS attach has reached the eNB."),
+     s("NAS","eNB forwards to the MME","eNB","MME","Initial UE Message","S1AP Initial UE Message","S1-MME","S1AP",
+       "The eNB selects an MME and forwards the NAS attach. S1-MME is the EPC equivalent of N2.",
+       ["NAS-PDU","TAI","E-UTRAN CGI","RRC establishment cause"],
+       "MME has the attach request."),
+     s("Authentication","MME asks the HSS for vectors","MME","HSS","AIR","Authentication-Information-Request","S6a","Diameter",
+       "The MME requests EPS authentication vectors from the HSS.",
+       ["IMSI","visited PLMN","requested vectors"],
+       "HSS will use the long-term key K."),
+     s("Authentication","HSS returns the EPS vector","HSS","MME","Authentication vector","RAND, AUTN, XRES, KASME","S6a","Diameter",
+       "The HSS returns RAND, AUTN, XRES, and KASME. KASME is the EPS anchor key. The 5G keys KSEAF and Kamf are not used on this path.",
+       ["RAND","AUTN","XRES","KASME"],
+       "MME can challenge the UE."),
+     s("Authentication","UE is challenged","MME","UE","Authentication Request","NAS Authentication Request","S1","EMM",
+       "The MME sends RAND and AUTN. The USIM checks AUTN and computes RES.",
+       ["RAND","AUTN","KSI-ASME"],
+       "UE is checking the network."),
+     s("Authentication","UE answers","UE","MME","Authentication Response","NAS Authentication Response","S1","EMM",
+       "The UE returns RES. The MME compares it with XRES. A match means the UE holds K. NAS keys and KeNB are derived from KASME.",
+       ["RES"],
+       "EPS-AKA succeeded. KASME is the root."),
+     s("NAS security","NAS protection is turned on","MME","UE","NAS SMC","NAS Security Mode Command","S1","EMM",
+       "The MME selects NAS integrity and ciphering algorithms and sends the security mode command.",
+       ["Selected NAS algorithms","KSI-ASME","replayed UE security capabilities"],
+       "UE will install the NAS context."),
+     s("NAS security","NAS is protected","UE","MME","NAS SMC Complete","NAS Security Mode Complete","S1","EMM",
+       "NAS is now integrity protected and ciphered.",
+       ["NAS Security Mode Complete","IMEISV if requested"],
+       "Protected NAS from here on."),
+     s("Subscription","MME updates its location in the HSS","MME","HSS","Update Location","Update-Location-Request","S6a","Diameter",
+       "The MME tells the HSS it is serving this IMSI and requests the subscription profile.",
+       ["IMSI","MME identity","visited PLMN"],
+       "HSS will return the APN profile."),
+     s("Subscription","HSS returns the APN profile","HSS","MME","Update Location Answer","Subscription data","S6a","Diameter",
+       "The profile contains the APN, the QoS (QCI and ARP), and the AMBR. The MME uses it for the default bearer. There is no slice list.",
+       ["APN configuration","QCI","ARP","UE-AMBR","APN-AMBR"],
+       "MME can create the default bearer."),
+     s("Bearer","MME opens the session at the SGW","MME","SGW","Create Session","Create Session Request","S11","GTP-C",
+       "The MME selects an SGW and a PGW and sends Create Session Request. This is the EPC equivalent of creating a PDU session, and it happens inside the attach.",
+       ["APN","PDN type","default bearer QoS","PGW address","user location"],
+       "SGW will continue the request to the PGW."),
+     s("Bearer","PGW assigns the IP address","SGW","PGW","Create Session","Create Session Request on S5","S5","GTP-C",
+       "The SGW forwards the create to the PGW. The PGW assigns the UE IP address. It can ask the PCRF on Gx for the default bearer QoS before it answers. The PGW returns its user-plane TEID.",
+       ["UE IP address","PGW S5-U F-TEID","bearer QoS"],
+       "IP address exists. The radio bearer does not."),
+     s("Bearer","SGW answers the MME","SGW","MME","Create Session Response","Create Session Response","S11","GTP-C",
+       "The SGW returns the UE IP address and the SGW S1-U TEID. Downlink GTP-U will be aimed at the eNB only after the eNB TEID is known.",
+       ["UE IP","SGW S1-U F-TEID","PGW addresses"],
+       "MME can accept the attach."),
+     s("Accept","MME accepts and sets up the eNB context","MME","eNB","ICS + Attach Accept","S1AP Initial Context Setup Request with Attach Accept","S1-MME","S1AP + EMM",
+       "Attach Accept carries the IP address, the APN, and the default bearer QoS. The S1AP message also carries the SGW S1-U TEID and the KeNB so the eNB can build the DRB and AS security.",
+       ["Attach Accept","PDN address","EPS bearer ID","QCI","SGW S1-U F-TEID","KeNB"],
+       "eNB can configure the default bearer."),
+     s("Accept","UE receives the bearer","eNB","UE","RRCConnectionReconfiguration","RRCConnectionReconfiguration with Attach Accept","Uu","LTE RRC + EMM",
+       "The eNB runs AS security and sends the DRB config plus Attach Accept. The UE installs the default bearer and the IP address.",
+       ["DRB","Attach Accept","UE IP"],
+       "UE has the accept."),
+     s("Accept","UE confirms","UE","eNB","Reconfig complete","RRCConnectionReconfigurationComplete","Uu","LTE RRC",
+       "The DRB is up.",
+       ["RRCConnectionReconfigurationComplete"],
+       "Default bearer radio is up."),
+     s("Accept","Attach completes","UE","MME","Attach Complete","NAS Attach Complete, then Initial Context Setup Response","S1","EMM + S1AP",
+       "The UE sends Attach Complete. The eNB includes its S1-U TEID in the Initial Context Setup Response so the MME can point downlink at the eNB.",
+       ["EPS bearer identity","eNB S1-U F-TEID"],
+       "MME has the eNB tunnel."),
+     s("Data","Downlink is aimed at the eNB","MME","SGW","Modify Bearer","Modify Bearer Request","S11","GTP-C",
+       "The MME tells the SGW the eNB S1-U TEID. The SGW sends downlink GTP-U to the eNB. The UE is EMM-REGISTERED and ECM-CONNECTED, with an IP address, on LTE only. NR is added later by SgNB Addition.",
+       ["eNB S1-U F-TEID","EPS bearer ID"],
+       "EMM-REGISTERED, ECM-CONNECTED. Default EPS bearer is forwarding. NR is not in use.")
+   ]},
+  {id:"nsa-add", mode:"NSA", kind:"signalling", title:"SgNB Addition (Option 3x)",
+   spec:"TS 37.340 §10.2.2",
+   goal:"The LTE master adds an NR secondary cell group. This is Option 3x: the S1-U user plane moves to the SgNB, and PDCP for the split bearer sits at the SgNB. NAS stays with the MME. The UE still sends RRC and NAS on the LTE master.",
+   end:"EN-DC is active. Control stays on LTE toward the MME. User plane for the moved bearer ends at the SgNB.",
+   nodes:nodes("UE","MeNB","SgNB","MME","SGW"),
+   steps:[
+     s("Measure","MeNB asks the UE to measure NR","MeNB","UE","B1 measurement","RRCConnectionReconfiguration with NR measConfig","Uu","LTE RRC",
+       "The MeNB already has the UE on LTE. If the UE has advertised NR bands, the MeNB configures a B1 measurement. B1 means the NR cell has crossed a threshold and is worth adding. The MME is not involved.",
+       ["measObjectNR","reportConfig B1","NR ARFCN"],
+       "UE will measure NR while LTE carries the session."),
+     s("Measure","NR cell is good enough","UE","MeNB","MeasurementReport","MeasurementReport for B1-NR","Uu","LTE RRC",
+       "The UE reports the NR cell RSRP or RSRQ. The report arrives on the LTE SRB. The NR cell is not serving yet.",
+       ["NR PCI","RSRP or RSRQ","measId"],
+       "MeNB has a candidate PSCell."),
+     s("Decide","MeNB chooses the SgNB and the bearer type","MeNB","MeNB","Bearer decision","SgNB selection and bearer type","X2","MeNB decision",
+       "The MeNB picks an SgNB and decides which EPS bearers become SCG bearers or split bearers. In Option 3x the PDCP anchor for those bearers moves to the SgNB. MCG bearers would keep PDCP on the MeNB. The primary secondary cell, the PSCell, is the NR cell the UE will use.",
+       ["Selected SgNB","E-RAB list","SCG or split bearer","UE NR capability"],
+       "Decision is local. X2 has not started."),
+     s("Prepare","MeNB asks the SgNB to admit the UE","MeNB","SgNB","SgNB Addition Request","X2AP SgNB Addition Request","X2-C","X2AP",
+       "The MeNB sends the bearer list, the NR UE capabilities, the UE aggregate bit rate, and the SgNB security key. That key is derived from KeNB at the MeNB. The SgNB uses it for NR PDCP. NAS security stays at the MME and is not restarted.",
+       ["MeNB UE X2AP ID","E-RABs to add","SgNB security key","NR UE capability","TNL addresses"],
+       "SgNB is in admission."),
+     s("Prepare","SgNB reserves the PSCell","SgNB","SgNB","Admission","PSCell admission control","Uu","SgNB decision",
+       "The SgNB checks radio resources on the PSCell, builds the NR cell-group config, and allocates GTP TEIDs. For Option 3x it allocates the S1-U downlink TEID that the SGW will use, and the X2-U TEIDs used if the bearer is split toward LTE.",
+       ["PSCell","NR DRB config","S1-U DL TEID","X2-U TEIDs"],
+       "Resources are reserved. The UE has not been told."),
+     s("Prepare","SgNB returns the NR config","SgNB","MeNB","Addition Request Ack","SgNB Addition Request Acknowledge","X2-C","X2AP",
+       "The acknowledge carries the NR RRC config, often called CG-Config, and the tunnel endpoints. The MeNB cannot read every NR RRC field. It forwards that container to the UE.",
+       ["CG-Config (NR RRC)","SgNB S1 DL GTP TEID","X2-U GTP TEIDs"],
+       "MeNB can reconfigure the UE."),
+     s("Execute","LTE RRC carries the NR config","MeNB","UE","RRCConnectionReconfiguration","RRCConnectionReconfiguration with NR SCG config","Uu","LTE RRC embedding NR RRC",
+       "The UE receives the NR secondary cell group on the LTE SRB. NR RRC is encapsulated inside LTE RRC. The UE keeps its LTE MCG and adds the NR SCG. The preamble for the PSCell is often included, so random access can be contention-free.",
+       ["nr-SecondaryCellGroupConfig","ra-PreambleIndex when CFRA","measConfig"],
+       "UE will access the PSCell."),
+     s("Execute","UE accesses the NR cell","UE","SgNB","PSCell random access","NR PRACH and random access response","Uu","NR RACH",
+       "The UE synchronizes to the PSCell and sends a preamble. With a dedicated preamble this is contention-free random access. The SgNB answers with a random access response. The completion toward the master still goes over LTE.",
+       ["Preamble","RAR","TA for the PSCell"],
+       "NR radio timing is acquired."),
+     s("Execute","UE confirms on LTE","UE","MeNB","Reconfig complete","RRCConnectionReconfigurationComplete, including the NR response","Uu","LTE RRC",
+       "The UE tells the MeNB that the NR config is applied. The NR RRC response is carried inside the LTE complete message.",
+       ["RRCConnectionReconfigurationComplete","NR RRCReconfigurationComplete"],
+       "SCG config is applied."),
+     s("Execute","MeNB tells the SgNB the UE is ready","MeNB","SgNB","Reconfig complete","SgNB Reconfiguration Complete","X2-C","X2AP",
+       "The SgNB may now use the NR leg. For a split bearer, X2-U can carry PDCP PDUs between SgNB and MeNB. Downlink from the SGW is still aimed at the MeNB until the S1 path is modified.",
+       ["SgNB Reconfiguration Complete"],
+       "NR leg is radio-ready. S1-U may still end at the MeNB."),
+     s("Path","MeNB moves the S1 downlink endpoint","MeNB","MME","E-RAB Modification Indication","S1AP E-RAB Modification Indication","S1-MME","S1AP",
+       "The MeNB tells the MME that downlink GTP-U for this bearer now ends at the SgNB. This is the Option 3x path move. The MME does not re-authenticate the UE. The EPC bearer ID stays.",
+       ["E-RAB ID","SgNB S1-U F-TEID"],
+       "MME will update the SGW."),
+     s("Path","MME points the SGW at the SgNB","MME","SGW","Modify Bearer","Modify Bearer Request","S11","GTP-C",
+       "The SGW replaces the downlink F-TEID. Packets from the PGW still arrive at the SGW on S5, and the SGW now sends them to the SgNB on S1-U.",
+       ["SgNB S1-U F-TEID","EPS bearer ID"],
+       "SGW downlink target is the SgNB."),
+     s("Path","MME confirms the MeNB","MME","MeNB","E-RAB Modification Confirm","S1AP E-RAB Modification Confirm","S1-MME","S1AP",
+       "The path move is confirmed. Control plane is unchanged: UE, LTE SRB, MeNB, S1-MME, MME.",
+       ["E-RAB Modification Confirm"],
+       "EN-DC user-plane path is in place."),
+     s("Data","Downlink user plane arrives on NR","SGW","SgNB","S1-U data","GTP-U downlink","S1-U","GTP-U",
+       "A downlink IP packet reaches the SgNB. PDCP at the SgNB ciphers and sequences it, then sends it on the NR leg, or also on the LTE leg if the bearer is split. The MeNB is no longer the S1-U endpoint for this bearer.",
+       ["SgNB S1-U TEID","inner IP packet"],
+       "EN-DC is in service. NAS and RRC signalling remain on the LTE master.")
+   ]},
+  {id:"nsa-scg", mode:"NSA", kind:"userplane", title:"SCG bearer path",
+   spec:"TS 37.340 Option 3x / 3a",
+   goal:"Follow one downlink packet on an SCG bearer. The packet never visits the MeNB. PDCP is at the SgNB. LTE still carries signalling.",
+   end:"The UE delivers one IP packet that arrived only on NR.",
+   nodes:nodes("UE","MeNB","SgNB","SGW","PGW"),
+   steps:[
+     s("Packet","Packet enters the EPC","PGW","SGW","S5 GTP-U","Downlink GTP-U on S5","S5","GTP-U",
+       "The data network has sent an IP packet to the UE address. The PGW encapsulates it to the SGW. The bearer is already an EN-DC SCG bearer.",
+       ["UE IP","SGW S5-U TEID"],
+       "Packet is inside the EPC."),
+     s("Packet","SGW sends it to the NR node","SGW","SgNB","S1-U to SgNB","Downlink GTP-U on S1-U","S1-U","GTP-U",
+       "On an SCG bearer the S1-U endpoint is the SgNB. The MeNB lifeline stays idle for this packet. That is the visible difference from an MCG bearer.",
+       ["SgNB S1-U TEID"],
+       "Packet is at the SgNB. MeNB did not see it."),
+     s("Packet","SgNB PDCP sends it on NR","SgNB","UE","NR leg","PDCP then NR RLC/MAC","Uu","NR user plane",
+       "PDCP at the SgNB ciphers the packet and NR RLC delivers it. There is no LTE RLC leg on a pure SCG bearer. The UE NR PDCP recovers the IP packet.",
+       ["NR PDCP SN","DRB on the SCG"],
+       "UE has the IP packet from NR only."),
+     s("Control","Signalling would still use LTE","UE","MeNB","Signalling stays on LTE","RRC and NAS remain on the MCG","Uu","LTE SRB",
+       "This step is the control-plane reminder for the same UE. An RRC or NAS message still goes to the MeNB on the LTE SRB, then to the MME. User-plane SCG traffic and signalling use different paths on purpose.",
+       ["LTE SRB","S1-MME toward the MME"],
+       "SCG bearer is NR-only for data. The master for signalling is still the MeNB.")
+   ]},
+  {id:"nsa-split", mode:"NSA", kind:"userplane", title:"Split bearer path",
+   spec:"TS 37.340 Option 3x split bearer",
+   goal:"Follow one downlink packet when PDCP at the SgNB splits it across NR and LTE. The UE reorders both legs back into one IP stream.",
+   end:"Both legs have been explained. The UE PDCP delivers one ordered packet.",
+   nodes:nodes("UE","MeNB","SgNB","SGW","PGW"),
+   steps:[
+     s("Packet","Packet reaches the SgNB","SGW","SgNB","S1-U","Downlink GTP-U to the SgNB","S1-U","GTP-U",
+       "Option 3x still terminates S1-U at the SgNB. One PDCP entity there owns the sequence numbers for this bearer.",
+       ["SgNB S1-U TEID"],
+       "Packet is inside SgNB PDCP."),
+     s("Split","NR leg","SgNB","UE","NR leg","PDCP PDU on NR RLC","Uu","NR user plane",
+       "The SgNB sends the PDCP PDU on the NR leg when NR radio can take it. This leg and the LTE leg are two transports for the same PDCP sequence.",
+       ["PDCP SN","NR RLC"],
+       "NR leg is on the air."),
+     s("Split","LTE leg crosses X2","SgNB","MeNB","X2-U","PDCP PDU forwarded on X2-U","X2-U","GTP-U",
+       "If the MeNB has LTE capacity, the SgNB sends the same bearer PDCP PDU over X2-U. The MeNB does not run PDCP for this bearer. It only runs LTE RLC and MAC. Flow control from the MeNB tells the SgNB how much LTE can take.",
+       ["X2-U TEID","PDCP PDU","desired buffer size"],
+       "PDCP PDU is at the MeNB RLC."),
+     s("Split","MeNB delivers the LTE leg","MeNB","UE","LTE leg","LTE RLC/MAC to the UE","Uu","LTE user plane",
+       "The UE receives the LTE leg on the MCG. UE PDCP, one entity, reorders this leg with the NR leg using the PDCP sequence numbers and delivers a single IP packet up the stack.",
+       ["LTE RLC","PDCP reordering at the UE"],
+       "UE has one IP packet, reassembled from whichever legs arrived.")
+   ]},
+  {id:"nsa-mcg", mode:"NSA", kind:"userplane", title:"MCG bearer path",
+   spec:"TS 37.340 MCG bearer",
+   goal:"Follow one downlink packet that stays anchored on LTE. PDCP is at the MeNB. The SgNB is not on this bearer. This is the path of the default bearer before SgNB addition, and of any bearer the MeNB keeps as an MCG bearer.",
+   end:"The UE receives the packet from LTE PDCP at the MeNB.",
+   nodes:nodes("UE","MeNB","SGW","PGW"),
+   steps:[
+     s("Packet","PGW to SGW","PGW","SGW","S5 GTP-U","Downlink on S5","S5","GTP-U",
+       "The IP packet enters the EPC at the PGW and is sent to the SGW.",
+       ["S5-U TEID"],
+       "Packet is at the SGW."),
+     s("Packet","SGW to the master eNB","SGW","MeNB","S1-U to MeNB","Downlink GTP-U on S1-U","S1-U","GTP-U",
+       "For an MCG bearer the S1-U endpoint is the MeNB. The SgNB is not a hop. This is also the path used for every bearer before EN-DC is added.",
+       ["MeNB S1-U TEID"],
+       "Packet is at the MeNB."),
+     s("Packet","PDCP and LTE radio","MeNB","UE","LTE DRB","PDCP, RLC, and MAC on LTE","Uu","LTE user plane",
+       "PDCP at the MeNB sequences and ciphers the packet. LTE RLC delivers it. The UE LTE PDCP recovers the IP packet. Adding a split or SCG bearer later moves PDCP for that bearer to the SgNB. This MCG bearer can remain on LTE beside it.",
+       ["LTE PDCP SN","EPS bearer on an MCG DRB"],
+       "UE has the packet from the LTE master.")
+   ]},
+  {id:"nsa-rel", mode:"NSA", kind:"signalling", title:"SgNB Release",
+   spec:"TS 37.340 §10.2.5",
+   goal:"NR radio is no longer useful, or the SgNB asks to leave. The bearer returns to LTE. The EPC session and the LTE attach stay up.",
+   end:"UE is LTE-only again. S1-U ends at the MeNB. The EPS bearer still exists.",
+   nodes:nodes("UE","MeNB","SgNB","MME","SGW"),
+   steps:[
+     s("Trigger","NR should be removed","SgNB","MeNB","Release Required","SgNB Release Required, or a local MeNB decision","X2-C","X2AP",
+       "The SgNB can ask to be released, for example when the PSCell radio fails. The MeNB can also decide from its own measurements. Either way the MeNB coordinates the release because it is the master.",
+       ["Cause","E-RABs to release"],
+       "EN-DC is still up while the release is prepared."),
+     s("Forward","PDCP status returns to the master","SgNB","MeNB","SN Status Transfer","SN Status Transfer and data forwarding","X2","X2AP + GTP-U",
+       "If the bearer is moving back to an MCG bearer, the SgNB tells the MeNB the PDCP sequence numbers and forwards unacknowledged packets on X2-U. The MeNB can continue PDCP without a gap.",
+       ["UL and DL PDCP SN","forwarded PDCP PDUs"],
+       "MeNB can take over PDCP."),
+     s("Path","S1-U is pointed back at the MeNB","MeNB","MME","E-RAB Modification Indication","E-RAB Modification Indication","S1-MME","S1AP",
+       "The MeNB tells the MME that downlink GTP-U should end at the MeNB again.",
+       ["MeNB S1-U F-TEID","E-RAB ID"],
+       "MME will update the SGW."),
+     s("Path","SGW returns to the MeNB","MME","SGW","Modify Bearer","Modify Bearer Request","S11","GTP-C",
+       "The SGW aims this bearer at the MeNB S1-U TEID.",
+       ["MeNB S1-U F-TEID"],
+       "Downlink target is LTE again."),
+     s("Radio","UE is told to drop the SCG","MeNB","UE","Release NR","RRCConnectionReconfiguration that releases the NR SCG","Uu","LTE RRC",
+       "The MeNB removes the NR secondary cell group. The UE keeps the LTE MCG, the NAS context, and the IP address.",
+       ["release of nr-SecondaryCellGroupConfig"],
+       "UE is leaving NR."),
+     s("Radio","UE confirms LTE-only","UE","MeNB","Reconfig complete","RRCConnectionReconfigurationComplete","Uu","LTE RRC",
+       "The UE confirms that the SCG is gone.",
+       ["RRCConnectionReconfigurationComplete"],
+       "UE is LTE-only on the radio."),
+     s("Cleanup","SgNB resources are freed","MeNB","SgNB","UE Context Release","SgNB UE Context Release","X2-C","X2AP",
+       "The MeNB tells the SgNB to delete the UE context. The EPS attach remains. A later good NR measurement can run SgNB Addition again on the same bearer.",
+       ["SgNB UE X2AP ID"],
+       "EN-DC is off. EMM-REGISTERED. Default bearer is on LTE.")
+   ]},
+  {id:"nsa-chg", mode:"NSA", kind:"signalling", title:"SgNB Change",
+   spec:"TS 37.340 §10.2.4",
+   goal:"The UE keeps the same MeNB and the same MME, and moves only the NR secondary node to a better PSCell.",
+   end:"A new SgNB serves the PSCell. S1-U ends at the new SgNB. LTE master is unchanged.",
+   nodes:nodes("UE","MeNB","Ssrc","Stgt","MME","SGW"),
+   steps:[
+     s("Measure","A better NR cell is reported","UE","MeNB","Measurement Report","MeasurementReport, neighbour NR better than PSCell","Uu","LTE RRC",
+       "The UE reports a neighbour NR cell that is better than the current PSCell. The report is sent on the LTE master.",
+       ["Neighbour NR PCI","RSRP"],
+       "MeNB will change the SgNB."),
+     s("Prepare","MeNB adds the target first","MeNB","Stgt","Addition Request","SgNB Addition Request toward the target","X2-C","X2AP",
+       "The MeNB asks the target SgNB to admit the UE and allocate a new SCG config and new S1-U and X2-U TEIDs. The source SgNB is still serving during this prepare.",
+       ["E-RABs","target security key","UE capabilities"],
+       "Target is in admission."),
+     s("Prepare","Target returns the new NR config","Stgt","MeNB","Addition Ack","SgNB Addition Request Acknowledge","X2-C","X2AP",
+       "The target returns the new CG-Config and its tunnel endpoints.",
+       ["New CG-Config","target S1-U TEID"],
+       "MeNB has a config the UE can apply."),
+     s("Forward","Source is asked to forward","MeNB","Ssrc","Release with forwarding","SgNB Release Request with forwarding address","X2-C","X2AP",
+       "The MeNB tells the source SgNB where to forward PDCP status and in-flight packets, toward the target.",
+       ["Forwarding TNL","E-RABs"],
+       "Source will hand over PDCP state."),
+     s("Execute","UE moves to the new PSCell","MeNB","UE","RRC reconfiguration","RRCConnectionReconfiguration toward the new SCG","Uu","LTE RRC",
+       "The UE applies the new NR config and performs random access on the new PSCell. LTE MCG stays.",
+       ["New PSCell config","CFRA preamble"],
+       "UE is acquiring the new PSCell."),
+     s("Execute","PDCP state moves","Ssrc","Stgt","Forwarding","SN Status Transfer and data forwarding","X2","X2AP + GTP-U",
+       "The source sends PDCP sequence status and forwards data so the target continues the bearer without a hole.",
+       ["PDCP SN","forwarded PDUs"],
+       "Target can continue PDCP."),
+     s("Path","S1-U moves to the target SgNB","MeNB","MME","E-RAB Modification","E-RAB Modification Indication","S1-MME","S1AP",
+       "The downlink GTP endpoint changes from the source SgNB to the target SgNB. The MME updates the SGW with Modify Bearer.",
+       ["Target SgNB S1-U F-TEID"],
+       "SGW will aim at the new SgNB."),
+     s("Cleanup","Old SgNB is released","MeNB","Ssrc","Context release","UE Context Release toward the source SgNB","X2-C","X2AP",
+       "The source SgNB drops the UE. The MeNB, the MME, and the EPS bearer ID are the same as before the change.",
+       ["Source SgNB UE X2AP ID"],
+       "New PSCell is in service. Master eNB and MME are unchanged.")
+   ]},
+  {id:"nsa-sr", mode:"NSA", kind:"signalling", title:"LTE Service Request",
+   spec:"TS 23.401",
+   goal:"The UE was ECM-IDLE after the LTE connection was released. This procedure restores LTE radio and the S1-U tunnel. EN-DC is not restored automatically. The MeNB adds the SgNB again only after a new NR measurement.",
+   end:"ECM-CONNECTED on LTE. NR is added only by a later SgNB Addition.",
+   nodes:nodes("UE","eNB","MME","SGW"),
+   steps:[
+     s("Radio","UE opens RRC from idle","UE","eNB","RRC connection","RRCConnectionRequest, Setup, and Complete","Uu","LTE RRC",
+       "The UE needs to send data or answer paging. It creates a new LTE RRC connection. The eNB has no UE context.",
+       ["RRCConnectionRequest","RRCConnectionSetup","RRCConnectionSetupComplete"],
+       "LTE SRB1 is up. ECM is still idle at the MME until S1 completes."),
+     s("NAS","Service Request reaches the MME","eNB","MME","Initial UE Message","S1AP Initial UE Message with NAS Service Request","S1-MME","S1AP",
+       "The NAS Service Request carries the M-TMSI. The MME finds the existing EMM context. This UE is already attached. The default bearer still exists at the SGW and PGW.",
+       ["M-TMSI","NAS Service Request","active flag"],
+       "MME has the UE context. S1-U is not restored yet."),
+     s("Bearer","MME restores the eNB bearer context","MME","eNB","Initial Context Setup","S1AP Initial Context Setup Request","S1-MME","S1AP",
+       "The MME sends the security context, KeNB, the EPS bearer list, and the SGW S1-U TEID.",
+       ["KeNB","EPS bearer QoS","SGW S1-U F-TEID"],
+       "eNB can rebuild the DRB."),
+     s("Radio","DRB returns","eNB","UE","RRCConnectionReconfiguration","AS security and DRB reconfiguration","Uu","LTE RRC",
+       "The eNB turns on AS security and rebuilds the LTE DRB.",
+       ["DRB config","AS security"],
+       "UE can send uplink on LTE."),
+     s("Bearer","eNB TEID returns to the MME","eNB","MME","ICS Response","Initial Context Setup Response","S1-MME","S1AP",
+       "The eNB provides its new S1-U TEID.",
+       ["eNB S1-U F-TEID"],
+       "MME can update the SGW."),
+     s("Data","Downlink returns to LTE","MME","SGW","Modify Bearer","Modify Bearer Request","S11","GTP-C",
+       "The SGW aims downlink at the eNB. The UE is ECM-CONNECTED on LTE. If EN-DC is wanted again, the MeNB configures B1 and runs SgNB Addition. Idle did not keep the SgNB context.",
+       ["eNB S1-U F-TEID"],
+       "ECM-CONNECTED on LTE. SgNB is not restored by this procedure.")
+   ]}
+];
+
+const TOURS = {
+  SA: ["sa-reg","sa-pdu","sa-an","sa-sr","sa-xn","sa-dereg"],
+  NSA: ["nsa-att","nsa-add","nsa-split","nsa-chg","nsa-rel","nsa-sr"]
+};
+
+const COMPARE = [
+  ["Core","5G Core","EPC"],
+  ["First radio","NR gNB from the start","LTE eNB, then NR is added"],
+  ["Control anchor","AMF","MME, reached through the MeNB"],
+  ["NAS","5GMM and 5GSM","EMM and ESM"],
+  ["How a data session starts","PDU Session Establishment after registration","PDN connectivity inside the LTE attach"],
+  ["Session identity","PDU session, S-NSSAI, DNN","PDN connection, APN, EPS bearer"],
+  ["User-plane anchor","UPF, controlled by the SMF on N4","SGW and PGW. In Option 3x, S1-U ends at the SgNB"],
+  ["Policy","PCF","PCRF on Gx"],
+  ["Subscription","UDM","HSS"],
+  ["Authentication","5G-AKA, SUCI, KSEAF and Kamf","EPS-AKA, IMSI, KASME"],
+  ["RAN interfaces","N2 NGAP and N3 GTP-U","S1-MME, S1-U, and X2 toward the SgNB"],
+  ["Idle","CM-IDLE. Context stays at the AMF","ECM-IDLE. Context stays at the MME. NR is not kept"],
+  ["Move the radio","Xn handover, or N2 if Xn is missing","SgNB change for NR. LTE handover is an X2 or S1 handover"],
+  ["Slicing","S-NSSAI is part of registration and the PDU session","EPC has no slice. The APN selects the PDN"],
+  ["Leave","Deregistration releases every PDU session","Detach releases the EPS bearers. This studio stops at EN-DC release and LTE idle"]
+];
+
+const state = {page:"overview", flowId:"sa-reg", step:0, playing:false, timer:null, speed:1600, loop:false, tour:null, voice:true, needIntro:true};
+let speakGen = 0;
+let safetyTimer = null;
+function clearSafety(){ if(safetyTimer){ clearTimeout(safetyTimer); safetyTimer=null; } }
+function pickVoice(){
+  if(!window.speechSynthesis) return null;
+  const voices = window.speechSynthesis.getVoices();
+  return voices.find(v=>/^en/i.test(v.lang) && /natural|samantha|daniel|google|aria|jenny|libby|serena/i.test(v.name))
+    || voices.find(v=>/^en-US|^en-GB|^en_US|^en_GB/i.test(v.lang))
+    || voices.find(v=>/^en/i.test(v.lang))
+    || null;
+}
+function speakable(s){
+  const pairs = [
+    ["5G-GUTI","5 G, G U T I"],["S-NSSAI","S, N S S A I"],["EN-DC","E N D C"],
+    ["GTP-U","G T P U"],["GTP-C","G T P C"],["PSCell","P S cell"],
+    ["SgNB","secondary g node b"],["MeNB","master e node b"],["gNB","g node b"],["eNB","e node b"],
+    ["AUSF","A U S F"],["NGAP","N G A P"],["PFCP","P F C P"],["PDCP","P D C P"],
+    ["NSSAI","N S S A I"],["SUCI","S U C I"],["SUPI","S U P I"],
+    ["SRB1","signalling radio bearer 1"],["KSEAF","K S E A F"],["KgNB","K, g node b"],
+    ["QoS","quality of service"],["PDU","P D U"],["AMF","A M F"],["SMF","S M F"],
+    ["UPF","U P F"],["UDM","U D M"],["PCF","P C F"],["MME","M M E"],["HSS","H S S"],
+    ["SGW","S G W"],["PGW","P G W"],["NAS","N A S"],["RRC","R R C"],["DNN","D N N"],
+    ["TEID","T E I D"],["DRB","data radio bearer"],["MCG","master cell group"],
+    ["SCG","secondary cell group"],["NSA","N S A"],["SA","S A"]
+  ];
+  let out = s;
+  pairs.forEach(([a,b])=>{ out = out.split(a).join(b); });
+  return out;
+}
+function stopSpeech(){
+  speakGen++;
+  clearSafety();
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+}
+function speakCurrent(){
+  if(!state.voice || !window.speechSynthesis) return;
+  if(state.page!=="SA" && state.page!=="NSA") return;
+  const f = current();
+  const step = f.steps[state.step];
+  const from = NODES[step.from][0];
+  const to = NODES[step.to][0];
+  const who = from===to
+    ? `${from} does this inside itself.`
+    : `${from} sends ${step.arrow} to ${to}, on the ${step.iface} interface.`;
+  const fields = step.ies.length ? ` The important fields are: ${step.ies.join(". ")}.` : "";
+  const intro = state.needIntro ? `${f.title}. ${f.goal} ` : "";
+  state.needIntro = false;
+  const text = speakable(`${intro}Step ${state.step+1} of ${f.steps.length}. ${step.title}. ${who} ${step.plain}${fields} After this step: ${step.after}`);
+  const gen = ++speakGen;
+  clearSafety();
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "en-US";
+  u.rate = state.speed===800 ? 1.05 : state.speed===2600 ? 0.86 : 0.94;
+  const chosen = pickVoice();
+  if(chosen) u.voice = chosen;
+  u.onend = ()=>{
+    clearSafety();
+    if(gen!==speakGen) return;
+    if(state.playing && state.voice) state.timer = setTimeout(advance, 500);
+  };
+  u.onerror = ()=>{
+    clearSafety();
+    if(gen!==speakGen) return;
+    if(state.playing) state.timer = setTimeout(advance, state.speed);
+  };
+  window.speechSynthesis.speak(u);
+  const cap = Math.min(150000, 14000 + text.length * 78);
+  safetyTimer = setTimeout(()=>{
+    if(gen!==speakGen || !state.playing || !state.voice) return;
+    if(!window.speechSynthesis.speaking && !window.speechSynthesis.pending) advance();
+  }, cap);
+}
+if(window.speechSynthesis){
+  window.speechSynthesis.onvoiceschanged = ()=>{};
+  setInterval(()=>{ if(window.speechSynthesis.speaking) window.speechSynthesis.resume(); }, 8000);
+}
+
+function esc(v){return String(v).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
+function flowById(id){return FLOWS.find(f=>f.id===id);}
+function current(){return flowById(state.flowId);}
+function stopTimer(){ if(state.timer){ clearTimeout(state.timer); state.timer=null; } }
+function schedule(){
+  stopTimer();
+  if(!state.playing) return;
+  if(state.voice && window.speechSynthesis){
+    speakCurrent();
+    return;
+  }
+  state.timer = setTimeout(advance, state.speed);
+}
+function advance(){
+  const f = current();
+  if(state.step < f.steps.length-1){
+    state.step++;
+    render();
+    schedule();
+    return;
+  }
+  if(state.tour && state.tour.index < state.tour.ids.length-1){
+    state.tour.index++;
+    state.flowId = state.tour.ids[state.tour.index];
+    state.step = 0;
+    state.needIntro = true;
+    state.page = state.tour.mode;
+    render();
+    schedule();
+    return;
+  }
+  if(state.loop && !state.tour){
+    state.step = 0;
+    state.needIntro = true;
+    render();
+    schedule();
+    return;
+  }
+  state.playing = false;
+  state.tour = null;
+  render();
+}
+function gotoFlow(id){
+  state.tour = null;
+  state.playing = false;
+  stopTimer();
+  stopSpeech();
+  const f = flowById(id);
+  state.flowId = id;
+  state.step = 0;
+  state.needIntro = true;
+  state.page = f.mode;
+  render();
+  if(state.voice) speakCurrent();
+}
+function startTour(mode){
+  stopSpeech();
+  state.tour = {mode, ids:TOURS[mode], index:0};
+  state.flowId = TOURS[mode][0];
+  state.step = 0;
+  state.needIntro = true;
+  state.page = mode;
+  state.playing = true;
+  render();
+  schedule();
+}
+
+function renderTabs(){
+  document.querySelectorAll("#tabs button").forEach(b=>{
+    const p = b.dataset.page;
+    const on = p==="overview" ? state.page==="overview" : p==="compare" ? state.page==="compare" : state.page===p;
+    b.classList.toggle("on", on);
+  });
+}
+
+function archSA(){
+  return `<div class="arch">
+    <div class="pill"><b>UE</b><small>NAS + RRC</small></div><span class="lnk">Uu</span>
+    <div class="pill"><b>gNB</b><small>NR only</small></div><span class="lnk">N2</span>
+    <div class="pill"><b>AMF</b><small>control</small></div><span class="lnk">N11</span>
+    <div class="pill"><b>SMF</b><small>session</small></div><span class="lnk">N4</span>
+    <div class="pill"><b>UPF</b><small>user plane</small></div><span class="lnk">N6</span>
+    <div class="pill"><b>DN</b><small>data network</small></div>
+  </div>
+  <p>AMF also talks to AUSF (N12), UDM (N8) and PCF (N15). SMF talks to PCF (N7) and UDM (N10). User packets take N3 from gNB to UPF and skip the AMF.</p>`;
+}
+function archNSA(){
+  return `<div class="arch">
+    <div class="pill"><b>UE</b><small>LTE master</small></div><span class="lnk">Uu LTE</span>
+    <div class="pill"><b>MeNB</b><small>master</small></div><span class="lnk">S1-MME</span>
+    <div class="pill"><b>MME</b><small>EPC</small></div><span class="lnk">S11</span>
+    <div class="pill"><b>SGW</b></div><span class="lnk">S5</span>
+    <div class="pill"><b>PGW</b></div>
+  </div>
+  <div class="arch">
+    <div class="pill"><b>UE</b><small>NR leg</small></div><span class="lnk">Uu NR</span>
+    <div class="pill"><b>SgNB</b><small>secondary</small></div><span class="lnk">S1-U in 3x</span>
+    <div class="pill"><b>SGW</b></div>
+    <span class="lnk">X2 between MeNB and SgNB</span>
+  </div>
+  <p>Option 3x keeps NAS on LTE. The SgNB is added with X2. Downlink for an SCG or split bearer moves from the MeNB to the SgNB.</p>`;
+}
+
+function renderOverview(){
+  const sa = FLOWS.filter(f=>f.mode==="SA");
+  const nsa = FLOWS.filter(f=>f.mode==="NSA");
+  const chain = (list)=>list.map(f=>`<button type="button" data-act="flow" data-id="${f.id}"><b>${esc(f.title)}</b><small>${esc(f.kind==="userplane"?"User-plane path":"Signalling")}</small></button>`).join("");
+  return `<h1>Study SA and NSA as real procedures</h1>
+  <p class="lead">Press play and the studio walks the message sequence out loud. Each step is read in full: who sends it, why it exists, the fields that matter, and the state afterwards. On a phone, use the bar at the bottom. Voice stays on until you mute it.</p>
+  <div class="toolbar">
+    <button class="btn primary" type="button" data-act="tour" data-mode="SA">Play full SA life cycle</button>
+    <button class="btn primary" type="button" data-act="tour" data-mode="NSA">Play full NSA life cycle</button>
+  </div>
+  <div class="grid-2">
+    <section class="panel">
+      <div class="kicker sa-k">Standalone · Option 2</div>
+      <h2>NR and the 5G Core</h2>
+      ${archSA()}
+      <div class="chain">${chain(sa)}</div>
+    </section>
+    <section class="panel">
+      <div class="kicker nsa-k">Non-Standalone · EN-DC Option 3x</div>
+      <h2>LTE anchor, NR added</h2>
+      ${archNSA()}
+      <div class="chain">${chain(nsa)}</div>
+    </section>
+  </div>
+  <p class="src">Main path only, aligned with 3GPP TS 23.502, TS 23.501, TS 38.300, TS 38.331, TS 37.340 and TS 23.401. AMF relocation, I-UPF insertion, EPS fallback, and EAP-AKA' are named where they change the story and are not drawn as extra ladders. Keyboard: Space plays, Left and Right step.</p>`;
+}
+
+function renderCompare(){
+  const rows = COMPARE.map(r=>`<tr><th>${esc(r[0])}</th><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join("");
+  return `<h1>Same intent, different anchor</h1>
+  <p class="lead">SA puts the UE on NR and on the 5G Core immediately. NSA attaches the UE to LTE and the EPC, then adds NR as a secondary cell group under the master eNB.</p>
+  <div class="panel" style="overflow:auto">
+    <table>
+      <thead><tr><th>Topic</th><th>SA Option 2</th><th>NSA Option 3x</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>
+  <div class="toolbar" style="margin-top:14px">
+    <button class="btn" type="button" data-act="flow" data-id="sa-reg">Open SA registration</button>
+    <button class="btn" type="button" data-act="flow" data-id="nsa-att">Open LTE attach</button>
+    <button class="btn" type="button" data-act="flow" data-id="nsa-add">Open SgNB addition</button>
+    <button class="btn" type="button" data-act="flow" data-id="sa-pdu">Open PDU session</button>
+  </div>`;
+}
+
+function renderStudio(){
+  const mode = state.page;
+  const list = FLOWS.filter(f=>f.mode===mode);
+  if(!list.some(f=>f.id===state.flowId)) state.flowId = list[0].id;
+  const f = current();
+  const step = f.steps[state.step];
+  const n = f.nodes.length;
+  const phases = [];
+  f.steps.forEach(st=>{ if(phases[phases.length-1]!==st.phase) phases.push(st.phase); });
+  const chips = list.map(fl=>`<button type="button" class="chip ${fl.kind==="userplane"?"up":""} ${fl.id===f.id?"on":""}" data-act="flow" data-id="${fl.id}">${esc(fl.title)}</button>`).join("");
+  const phaseBtns = phases.map(p=>`<button type="button" class="${p===step.phase?"on":""}" data-act="phase" data-phase="${esc(p)}">${esc(p)}</button>`).join("");
+  const heads = f.nodes.map((node,i)=>{
+    const hot = node.id===step.from || node.id===step.to;
+    return `<div class="hd ${node.kind} ${hot?"hot":""}"><b>${esc(node.label)}</b><small>${esc(node.role)}</small></div>`;
+  }).join("");
+  const rows = f.steps.map((st,i)=>{
+    const a = f.nodes.findIndex(x=>x.id===st.from);
+    const b = f.nodes.findIndex(x=>x.id===st.to);
+    const cls = i===state.step?"on":(i<state.step?"past":"");
+    let hop;
+    if(a===b){
+      const left = ((a+0.5)/n)*100;
+      hop = `<span class="self" style="left:${left}%">${esc(st.arrow)}</span>`;
+    } else {
+      const lo = Math.min(a,b), hi = Math.max(a,b);
+      const left = ((lo+0.5)/n)*100;
+      const width = ((hi-lo)/n)*100;
+      const back = b<a ? "back" : "fwd";
+      const pkt = i===state.step ? `<b class="pkt"></b>` : "";
+      hop = `<span class="hop ${back}" style="left:${left}%;width:${width}%"><em>${esc(st.arrow)}</em>${pkt}</span>`;
+    }
+    const lives = f.nodes.map(()=>`<i class="life"></i>`).join("");
+    return `<button type="button" class="step ${cls}" data-act="step" data-i="${i}">
+      <div class="line"><div class="gutter">${i+1}</div><div class="cols">${lives}${hop}</div></div>
+    </button>`;
+  }).join("");
+  const ies = step.ies.map(x=>`<li>${esc(x)}</li>`).join("");
+  const watch = step.watch ? `<div class="call">${esc(step.watch)}</div>` : "";
+  const tour = state.tour ? `<div class="tourtag">${esc(state.tour.mode)} life cycle ${state.tour.index+1} / ${state.tour.ids.length}</div>` : "";
+  const pct = Math.round(((state.step+1)/f.steps.length)*100);
+  const voiceLabel = state.voice ? "Voice on" : "Voice off";
+  return `<section class="studio" data-mode="${mode}">
+    <div class="kicker ${mode==="SA"?"sa-k":"nsa-k"}">${mode==="SA"?"Standalone":"Non-Standalone"} · ${f.kind==="userplane"?"User-plane path":"Signalling procedure"}</div>
+    <h1>${esc(f.title)}</h1>
+    <div class="meta">${esc(f.spec)}</div>
+    <p class="goal">${esc(f.goal)}</p>
+    ${tour}
+    <div class="toolbar desk-tools">
+      <button class="btn primary" type="button" data-act="play">${state.playing?"Pause":"Play with voice"}</button>
+      <button class="btn" type="button" data-act="prev">Previous</button>
+      <button class="btn" type="button" data-act="next">Next</button>
+      <button class="btn ${state.voice?"on":""}" type="button" data-act="voice">${voiceLabel}</button>
+      <button class="btn" type="button" data-act="hear">Hear this step</button>
+      <button class="btn ${state.speed===2600?"on":""}" type="button" data-act="speed" data-ms="2600">Slow</button>
+      <button class="btn ${state.speed===1600?"on":""}" type="button" data-act="speed" data-ms="1600">Normal</button>
+      <button class="btn ${state.speed===800?"on":""}" type="button" data-act="speed" data-ms="800">Fast</button>
+      <button class="btn ${state.loop?"on":""}" type="button" data-act="loop">${state.loop?"Loop on":"Loop off"}</button>
+      <button class="btn" type="button" data-act="tour" data-mode="${mode}">Play full ${mode} life cycle</button>
+    </div>
+    <div class="phases">${phaseBtns}</div>
+    <div class="chiprow">${chips}</div>
+    <div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>
+    <div class="banner ${state.voice?"speaking":""}" aria-live="polite">
+      <div class="t">${state.voice?'<span class="speakdot"></span>':""}Step ${state.step+1} of ${f.steps.length} · ${esc(step.title)}</div>
+      <div>${esc(step.plain)}</div>
+    </div>
+    <div class="phone-only">
+      <div class="row" style="margin-bottom:10px">
+        <button class="btn" type="button" data-act="hear">Hear this step</button>
+        <button class="btn" type="button" data-act="tour" data-mode="${mode}">Full ${mode} life cycle</button>
+        <button class="btn ${state.speed===2600?"on":""}" type="button" data-act="speed" data-ms="2600">Slow</button>
+        <button class="btn ${state.speed===1600?"on":""}" type="button" data-act="speed" data-ms="1600">Normal</button>
+        <button class="btn ${state.speed===800?"on":""}" type="button" data-act="speed" data-ms="800">Fast</button>
+      </div>
+    </div>
+    <p class="swipe-hint">Swipe the diagram sideways. The dot is the message moving between the nodes.</p>
+    <div class="studio-grid">
+      <div class="ladder-scroll" id="ladder">
+        <div class="line head"><div class="gutter"></div><div class="cols" style="min-height:58px">${heads}</div></div>
+        ${rows}
+      </div>
+      <aside class="study">
+        <div class="meta">${esc(step.phase)}</div>
+        <h3>${esc(step.msg)}</h3>
+        <div class="kv">
+          <span>From</span><b>${esc(NODES[step.from][0])}</b>
+          <span>To</span><b>${esc(NODES[step.to][0])}</b>
+          <span>Interface</span><b>${esc(step.iface)}</b>
+          <span>Protocol</span><b>${esc(step.proto)}</b>
+        </div>
+        <div class="kicker">Fields that matter</div>
+        <ul>${ies}</ul>
+        <div class="kicker">State after this step</div>
+        <p>${esc(step.after)}</p>
+        ${watch}
+        <p class="meta" style="margin-top:10px">End of this procedure: ${esc(f.end)}</p>
+      </aside>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--ue)"></i>UE</span>
+      <span><i style="background:var(--ran)"></i>RAN</span>
+      <span><i style="background:var(--cp)"></i>Control</span>
+      <span><i style="background:var(--up)"></i>User plane</span>
+      <span><i style="background:var(--data)"></i>Subscription or policy</span>
+    </div>
+    <div class="dock">
+      <button class="btn" type="button" data-act="prev">Back</button>
+      <button class="btn primary" type="button" data-act="play">${state.playing?"Pause":"Play"}</button>
+      <button class="btn" type="button" data-act="next">Next</button>
+      <button class="btn wide ${state.voice?"on":""}" type="button" data-act="voice">${state.voice?"Voice on. Tap to mute.":"Voice off. Tap to hear each step."}</button>
+    </div>
+  </section>`;
+}
+
+function render(){
+  renderTabs();
+  document.body.classList.toggle("in-studio", state.page==="SA" || state.page==="NSA");
+  const app = document.getElementById("app");
+  if(state.page==="overview") app.innerHTML = renderOverview();
+  else if(state.page==="compare") app.innerHTML = renderCompare();
+  else app.innerHTML = renderStudio();
+  document.querySelectorAll(".cols").forEach(cols=>{
+    const count = cols.querySelector(".hd") ? cols.querySelectorAll(".hd").length : cols.querySelectorAll(".life").length;
+    const col = window.matchMedia("(max-width:860px)").matches ? 104 : 132;
+    if(count) cols.style.gridTemplateColumns = `repeat(${count}, minmax(${col}px, 1fr))`;
+  });
+  const scroller = document.getElementById("ladder");
+  const active = document.querySelector(".step.on");
+  if(scroller && active){
+    const delta = active.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+    scroller.scrollTop += delta - 72;
+  }
+  if(window.matchMedia("(max-width:860px)").matches && scroller){
+    const box = scroller.getBoundingClientRect();
+    if(box.top > window.innerHeight * 0.45 || box.bottom < 120){
+      const top = box.top + window.scrollY - 72;
+      window.scrollTo({top:Math.max(0, top), behavior:"auto"});
+    }
+  }
+}
+
+document.body.addEventListener("click", (e)=>{
+  const t = e.target.closest("[data-act]");
+  if(!t) return;
+  const act = t.dataset.act;
+  if(act==="page"){
+    state.playing = false; stopTimer(); stopSpeech(); state.tour=null;
+    if(t.dataset.page==="SA" || t.dataset.page==="NSA"){
+      state.page = t.dataset.page;
+      const list = FLOWS.filter(f=>f.mode===state.page);
+      if(!list.some(f=>f.id===state.flowId)) state.flowId = list[0].id;
+    } else state.page = t.dataset.page;
+    render();
+  } else if(act==="flow"){
+    gotoFlow(t.dataset.id);
+  } else if(act==="tour"){
+    startTour(t.dataset.mode);
+  } else if(act==="play"){
+    state.playing = !state.playing;
+    if(!state.playing){ stopTimer(); stopSpeech(); render(); return; }
+    if(state.step === current().steps.length-1){ state.step = 0; state.needIntro = true; }
+    render();
+    schedule();
+  } else if(act==="prev"){
+    state.playing = false; stopTimer(); stopSpeech();
+    state.step = Math.max(0, state.step-1);
+    render();
+    if(state.voice) speakCurrent();
+  } else if(act==="next"){
+    state.playing = false; stopTimer(); stopSpeech();
+    state.step = Math.min(current().steps.length-1, state.step+1);
+    render();
+    if(state.voice) speakCurrent();
+  } else if(act==="voice"){
+    state.voice = !state.voice;
+    if(!state.voice){
+      stopSpeech();
+      render();
+      if(state.playing) schedule();
+    } else {
+      render();
+      speakCurrent();
+    }
+  } else if(act==="hear"){
+    speakCurrent();
+  } else if(act==="speed"){
+    state.speed = Number(t.dataset.ms);
+    render();
+    if(state.playing) schedule();
+  } else if(act==="loop"){
+    state.loop = !state.loop;
+    render();
+  } else if(act==="phase"){
+    const f = current();
+    const i = f.steps.findIndex(st=>st.phase===t.dataset.phase);
+    if(i>=0){
+      if(!state.playing) stopSpeech();
+      state.step = i;
+      render();
+      if(state.playing) schedule();
+      else if(state.voice) speakCurrent();
+    }
+  } else if(act==="step"){
+    const i = Number(t.dataset.i);
+    if(i===state.step && !state.playing){ if(state.voice) speakCurrent(); return; }
+    if(!state.playing) stopSpeech();
+    state.step = i;
+    render();
+    if(state.playing) schedule();
+    else if(state.voice) speakCurrent();
+  }
+});
+
+document.addEventListener("keydown", (e)=>{
+  if(state.page!=="SA" && state.page!=="NSA") return;
+  if(e.key===" " || e.code==="Space"){
+    e.preventDefault();
+    state.playing = !state.playing;
+    if(!state.playing){ stopTimer(); stopSpeech(); render(); return; }
+    if(state.step === current().steps.length-1){ state.step = 0; state.needIntro = true; }
+    render(); schedule();
+  } else if(e.key==="ArrowRight"){
+    e.preventDefault();
+    state.playing = false; stopTimer(); stopSpeech();
+    state.step = Math.min(current().steps.length-1, state.step+1);
+    render();
+    if(state.voice) speakCurrent();
+  } else if(e.key==="ArrowLeft"){
+    e.preventDefault();
+    state.playing = false; stopTimer(); stopSpeech();
+    state.step = Math.max(0, state.step-1);
+    render();
+    if(state.voice) speakCurrent();
+  }
+});
+
+render();
+</script>
+
+
+</body></html>
